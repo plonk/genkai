@@ -2,17 +2,24 @@
 
 <dl>
 <% @thread.posts(1..Float::INFINITY).each do |post| %>
-  <dt><%= h post.no %>：<% if post.mail.empty? then %><%= h post.name %><% else %><a href="mailto:<%= h post.mail %>"><%= h post.name %></a><% end %>：<%= h post.date %></dt>
+  <dt><%= h post.no %>：
+    <% if post.mail.empty? then %>
+      <%= h post.name %>
+    <% else %>
+      <a href="mailto:<%= h post.mail %>"><%= h post.name %></a>
+    <% end %>：<%= h post.date %></dt>
   <dd><%= post.body %></dd>
 <% end %>
 </dl>
 
 <form action="/test/bbs.cgi" method="POST">
-<input type="submit" name="submit" value="書き込む">
-名前：<input name="FROM" type="text">
-E-mail：<input name="mail" type="text">
-<textarea style="width: 100%" name="MESSAGE">
-</textarea>
-<input type="hidden" name="bbs" value="<%= h @ita_name %>">
-<input type="hidden" name="key" value="<%= h @thread.id %>">
+  <input type="submit" name="submit" value="書き込む">
+  名前：<input name="FROM" type="text">
+  E-mail：<input name="mail" type="text">
+  <textarea style="width: 100%" name="MESSAGE">
+  </textarea>
+  <input type="hidden" name="bbs" value="<%= h @ita_name %>">
+  <input type="hidden" name="key" value="<%= h @thread.id %>">
 </form>
+
+<a href="/<%= h @ita_name %>/">スレッド一覧</a>

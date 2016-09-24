@@ -1,3 +1,4 @@
+# -*- frozen_string_literal: true -*-
 require 'sinatra'
 
 module Genkai
@@ -5,10 +6,15 @@ module Genkai
     attr_reader :name, :id
 
     def initialize(path)
-      @data = File.read(path).force_encoding("CP932").encode("UTF-8")
+      @path = path
+      @data = File.read(path).force_encoding('CP932').encode('UTF-8')
 
-      @name = @data.each_line { |line| break line.chomp.split('<>')[4] }
+      @name = @data.each_line.first.chomp.split('<>')[4]
       @id = path.split('/')[-1].gsub('.dat', '')
+    end
+
+    def mtime
+      File.mtime(@path)
     end
 
     def number_posts
@@ -20,13 +26,12 @@ module Genkai
       @data.each_line.with_index(1) do |line, res_no|
         next unless range.include?(res_no)
 
-        name, mail, date, body, title = line.chomp.split('<>', 5)
+        name, mail, date, body, _title = line.chomp.split('<>', 5)
         post = Post.new(res_no.to_s, name, mail, date, body)
         ary << post
       end
-      return ary
+      ary
     end
-    
   end
 
   class Post
@@ -54,16 +59,16 @@ module Genkai
     def to_s
       [no, name, mail, date, body].join('<>')
     end
-
   end
 
   class Application < Sinatra::Base
-    helpers do 
-
+    helpers do
       def authenticate!
         auth = Rack::Auth::Basic::Request.new(request.env)
-        unless auth.provided? and auth.basic? and auth.credentials == ['admin', '1234']
-          response['WWW-Authenticate'] = "Basic realm=\"Admin area\""
+        unless auth.provided? &&
+               auth.basic? &&
+               auth.credentials == %w(admin 1234)
+          response['WWW-Authenticate'] = 'Basic realm="Admin area"'
           halt 401, 'Not Authorized'
         end
       end
@@ -72,12 +77,11 @@ module Genkai
       def h(text)
         Rack::Utils.escape_html(text)
       end
-
     end
 
     get '/' do
       @itas = Dir.glob('public/*/').map { |path| path.split('/')[1] }
-      erb :index 
+      erb :index
     end
 
     # 板トップ
@@ -87,7 +91,10 @@ module Genkai
       end
       @ita_name = ita
 
-      @threads = Dir.glob("public/#{ita}/dat/*.dat").map { |dat| ThreadFile.new(dat) }
+      @threads = Dir.glob("public/#{ita}/dat/*.dat")
+                    .map { |dat| ThreadFile.new(dat) }
+                    .sort_by(&:mtime)
+                    .reverse
 
       erb :ita_top
     end
@@ -102,25 +109,39 @@ module Genkai
       ita_path = File.join('public', ita)
       sure_path = File.join('public', ita, 'dat', "#{sure}.dat")
 
-      unless File.directory? ita_path
-        halt 404, "そんな板ないです。(#{ita})"
-      end
-      unless File.readable? sure_path
-        halt 404, "そんなスレないです。(#{sure})"
-      end
+      halt 404, "そんな板ないです。(#{ita})" unless File.directory? ita_path
+      halt 404, "そんなスレないです。(#{sure})" unless File.readable? sure_path
 
       @ita_name = ita
       @thread = ThreadFile.new(sure_path)
 
-      [200, {"Content-Type" => "text/html; charset=Shift_JIS"}, erb(:timeline).encode("CP932")]
+      sjis_html erb :timeline
+    end
+
+    def sjis_html(html, status_code = 200)
+      [
+        status_code,
+        { 'Content-Type' => 'text/html; charset=Shift_JIS' },
+        html.encode('CP932')
+      ]
     end
 
     get '/:ita/subject.txt' do |ita|
-      unless File.directory? ita_path
-        halt 404, "そんな板ないです。(#{ita})"
-      end
+      halt 404, "そんな板ないです。(#{ita})" unless File.directory? board_path(ita)
 
-      Dir.glob("public/#{ita}/dat/*.dat")
+      body = Dir.glob("public/#{ita}/dat/*.dat")
+             .map { |path| ThreadFile.new(path) }
+             .sort_by(&:mtime)
+             .reverse
+             .map { |t| "#{t.id}.dat<>#{t.name} (#{t.number_posts})\n" }
+             .join
+      body.encode('CP932')
+    end
+
+    get '/:ita/SETTING.TXT' do |ita|
+      halt 404, "そんな板ないです。(#{ita})" unless File.directory? board_path(ita)
+
+      "BBS_TITLE=集落板\n".encode('CP932')
     end
 
     get '/admin/*' do
@@ -130,32 +151,41 @@ module Genkai
 
     require 'tempfile'
 
-    def to_2ch_dat_line(post, thread_title = "")
-      ([post.name, post.mail, post.date, post.body, thread_title].join('<>') + "\n").encode('Shift_JIS')
+    def to_2ch_dat_line(post, thread_title = '')
+      [post.name, post.mail, post.date, post.body, thread_title]
+        .join('<>')
+        .concat("\n")
+        .encode('CP932')
     end
 
     def format_date(time)
-      time.strftime("%Y/%m/%d(%%s) %H:%M:%S") % "日月火水木金土"[time.wday]
+      time.strftime('%Y/%m/%d(%%s) %H:%M:%S') % '日月火水木金土'[time.wday]
     end
 
-    ESCAPE_TABLE = { '<' => 'lt;', '>' => 'gt;', '&' => '&amp;' }
+    ESCAPE_TABLE = { '<' => 'lt;', '>' => 'gt;', '&' => '&amp;' }.freeze
     def escape_field(str)
       str.gsub(/[<>&]/) { |char| ESCAPE_TABLE[char] }
     end
 
     def escape_body(body)
-      " " + escape_field(body).each_line.map { |line| line.chomp }.join(" <br> ") + " "
+      ' ' + escape_field(body).each_line.map(&:chomp).join(' <br> ') + ' '
     end
 
     def create_new_post(name, mail, message)
       date = format_date(Time.now.localtime)
-      Post.new("n/a", escape_field(name), escape_field(mail), escape_field(date), escape_body(message))
+      Post.new('n/a',
+               escape_field(name),
+               escape_field(mail),
+               date,
+               escape_body(message))
     end
 
-    def sjis(utf8)
-      [200, 
-       {'Content-Type' => 'text/html; charset=Shift_JIS' },
-       utf8.encode("Shift_JIS")]
+    def dat_path(board, thread_id)
+      File.join('public', board, 'dat', "#{thread_id}.dat")
+    end
+
+    def board_path(board)
+      File.join('public')
     end
 
     # bbs: 板名
@@ -164,26 +194,28 @@ module Genkai
     # mail: メールアドレス
     # MESSAGE: 本文
     post '/test/bbs.cgi' do
-      sure_path = File.join('public', params['bbs'], 'dat', "#{params['key']}.dat")
+      sure_path = dat_path(params['bbs'], params['key'])
 
-      halt 400, 'name required'  if [nil, ""].include?(params['FROM'])
-      halt 400, 'message body required' if [nil, ""].include?(params['MESSAGE'])
+      halt 400, 'name required' if [nil, ''].include?(params['FROM'])
+      halt 400, 'message body required' if [nil, ''].include?(params['MESSAGE'])
 
-      t = Tempfile.new(['genkai', '.dat'], "tmp")
+      t = Tempfile.new(['genkai', '.dat'], 'tmp')
       t.write(File.read(sure_path))
 
+      name, mail, body = params
+                         .values_at('FROM', 'mail', 'MESSAGE')
+                         .map { |s| s.force_encoding('CP932').encode('UTF-8') }
+      post = create_new_post(name, mail, body)
+      line = [post.name, post.mail, post.date, post.body, ''].join('<>') + "\n"
 
-      post = create_new_post(*params.values_at('FROM', 'mail', 'MESSAGE').map { |s| s.force_encoding('Shift_JIS').encode('UTF-8')} )
-      line = [post.name, post.mail, post.date, post.body, ""].join('<>') + "\n"
-
-      t.puts(line.encode('Shift_JIS'))
+      t.puts(line.encode('CP932'))
 
       t.close
 
       File.rename(t.path, sure_path)
 
       @head = "<meta http-equiv=\"refresh\" content=\"1; url=#{h back}\">"
-      sjis(erb :posted)
+      sjis_html erb :posted
     end
   end
 end
