@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+<head>
+  <title><% if @title then %><%= h @title %> &dash; Genkai<% else %>Genkai<% end %></title>
+  <script src="/bower_components/jquery/dist/jquery.min.js"></script>
+  <%= @head %>
+</head>
+<body>
+  <%= yield %>
+<hr>
+Genkai v0.0.1
+</body>
+</html>

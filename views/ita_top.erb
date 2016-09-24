@@ -1,0 +1,9 @@
+<h1>
+<%= @ita_name %>板
+</h1>
+
+<ul>
+<% @threads.each do |thread| %>
+<li><a href="/test/read.cgi/<%= @ita_name + '/' + thread.id %>"><%= thread.name %></a> (<%= thread.number_posts %>)</li>
+<% end %>
+</ul>
