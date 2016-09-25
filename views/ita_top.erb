@@ -1,9 +1,13 @@
 <h1>
-<%= @ita_name %>板
+<%= @board.settings['BBS_TITLE'] %>
 </h1>
+
+<div>
+<%= @board.local_rules %>
+</div>
 
 <ul>
 <% @threads.each do |thread| %>
-<li><a href="/test/read.cgi/<%= @ita_name + '/' + thread.id %>"><%= thread.name %></a> (<%= thread.number_posts %>)</li>
+<li><a href="/test/read.cgi/<%= @board.id + '/' + thread.id %>"><%= thread.name %></a> (<%= thread.number_posts %>)</li>
 <% end %>
 </ul>

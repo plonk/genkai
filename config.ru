@@ -1,13 +1,51 @@
-# -*- frozen_string_literal: true -*-
 require 'sinatra'
 
+class String
+  def to_utf8
+    encode('UTF-8')
+  end
+
+  def to_sjis
+    encode('CP932')
+  end
+end
+
 module Genkai
+  class BoardSettings < Hash
+    def initialize(string)
+      parse_settings(string)
+    end
+
+    def to_s
+      each_pair { |key, value| "#{key}=#{value}\n" }.join
+    end
+
+    def parse_settings(string)
+      replace string.each_line.map { |line| line.chomp.split(/=/, 2) }.to_h
+    end
+  end
+
+  class Board
+    attr_reader :id, :settings
+
+    def initialize(id)
+      @id = id
+      setting_path = File.join('public', id, 'SETTING.TXT')
+      @settings = BoardSettings.new(File.read(setting_path, encoding: 'CP932').to_utf8)
+    end
+
+    def local_rules
+      path = File.join('public', id, 'head.txt')
+      File.read(path, encoding: 'CP932').to_utf8
+    end
+  end
+
   class ThreadFile
     attr_reader :name, :id
 
     def initialize(path)
       @path = path
-      @data = File.read(path).force_encoding('CP932').encode('UTF-8')
+      @data = File.read(path, encoding: 'CP932').to_utf8
 
       @name = @data.each_line.first.chomp.split('<>')[4]
       @id = path.split('/')[-1].gsub('.dat', '')
@@ -62,6 +100,11 @@ module Genkai
   end
 
   class Application < Sinatra::Base
+    SJIS_HTML = 'text/html;charset=Shift_JIS'
+    SJIS_PLAIN = 'text/plain;charset=Shift_JIS'
+
+    set :add_charset, []
+
     helpers do
       def authenticate!
         auth = Rack::Auth::Basic::Request.new(request.env)
@@ -77,11 +120,17 @@ module Genkai
       def h(text)
         Rack::Utils.escape_html(text)
       end
+
+      def sjis(text)
+        text.to_sjis
+      end
     end
 
     get '/' do
       @itas = Dir.glob('public/*/').map { |path| path.split('/')[1] }
-      erb :index
+
+      content_type SJIS_HTML
+      sjis erb :index
     end
 
     # 板トップ
@@ -89,14 +138,17 @@ module Genkai
       unless File.directory? File.join('public', ita)
         halt 404, "そんな板ないです。(#{ita})"
       end
-      @ita_name = ita
 
       @threads = Dir.glob("public/#{ita}/dat/*.dat")
                     .map { |dat| ThreadFile.new(dat) }
                     .sort_by(&:mtime)
                     .reverse
 
-      erb :ita_top
+      @board = Board.new(ita)
+      @title = @board.settings['BBS_TITLE']
+
+      content_type SJIS_HTML
+      sjis erb :ita_top
     end
 
     get '/test/read.cgi/:ita/:sure/:cmd' do
@@ -104,26 +156,14 @@ module Genkai
     end
 
     get '/test/read.cgi/:ita/:sure' do |ita, sure|
-      # "%s, %s" % [ita, sure]
+      halt 404, "そんな板ないです。(#{ita})" unless File.directory? board_path(ita)
+      halt 404, "そんなスレないです。(#{sure})" unless File.readable? dat_path(ita, sure)
 
-      ita_path = File.join('public', ita)
-      sure_path = File.join('public', ita, 'dat', "#{sure}.dat")
+      @board = Board.new(ita)
+      @thread = ThreadFile.new(dat_path(ita, sure))
 
-      halt 404, "そんな板ないです。(#{ita})" unless File.directory? ita_path
-      halt 404, "そんなスレないです。(#{sure})" unless File.readable? sure_path
-
-      @ita_name = ita
-      @thread = ThreadFile.new(sure_path)
-
-      sjis_html erb :timeline
-    end
-
-    def sjis_html(html, status_code = 200)
-      [
-        status_code,
-        { 'Content-Type' => 'text/html; charset=Shift_JIS' },
-        html.encode('CP932')
-      ]
+      content_type SJIS_HTML
+      sjis erb :timeline
     end
 
     get '/:ita/subject.txt' do |ita|
@@ -135,13 +175,16 @@ module Genkai
              .reverse
              .map { |t| "#{t.id}.dat<>#{t.name} (#{t.number_posts})\n" }
              .join
-      body.encode('CP932')
+
+      content_type SJIS_PLAIN
+      sjis body.encode('CP932')
     end
 
     get '/:ita/SETTING.TXT' do |ita|
       halt 404, "そんな板ないです。(#{ita})" unless File.directory? board_path(ita)
 
-      "BBS_TITLE=集落板\n".encode('CP932')
+      content_type SJIS_PLAIN
+      sjis "BBS_TITLE=集落板\n"
     end
 
     get '/admin/*' do
@@ -185,7 +228,15 @@ module Genkai
     end
 
     def board_path(board)
-      File.join('public')
+      File.join('public', board)
+    end
+
+    def blank?(obj)
+      case obj
+      when String then obj.empty?
+      when nil then true
+      else false
+      end
     end
 
     # bbs: 板名
@@ -196,15 +247,15 @@ module Genkai
     post '/test/bbs.cgi' do
       sure_path = dat_path(params['bbs'], params['key'])
 
-      halt 400, 'name required' if [nil, ''].include?(params['FROM'])
-      halt 400, 'message body required' if [nil, ''].include?(params['MESSAGE'])
+      halt 400, 'name required' if blank? params['FROM']
+      halt 400, 'message body required' if blank? params['MESSAGE']
 
       t = Tempfile.new(['genkai', '.dat'], 'tmp')
       t.write(File.read(sure_path))
 
       name, mail, body = params
                          .values_at('FROM', 'mail', 'MESSAGE')
-                         .map { |s| s.force_encoding('CP932').encode('UTF-8') }
+                         .map { |s| s.force_encoding('CP932') }
       post = create_new_post(name, mail, body)
       line = [post.name, post.mail, post.date, post.body, ''].join('<>') + "\n"
 
@@ -215,7 +266,10 @@ module Genkai
       File.rename(t.path, sure_path)
 
       @head = "<meta http-equiv=\"refresh\" content=\"1; url=#{h back}\">"
-      sjis_html erb :posted
+      @title = '書きこみました'
+
+      content_type SJIS_HTML
+      sjis erb :posted
     end
   end
 end

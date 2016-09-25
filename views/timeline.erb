@@ -18,8 +18,8 @@
   E-mail：<input name="mail" type="text">
   <textarea style="width: 100%" name="MESSAGE">
   </textarea>
-  <input type="hidden" name="bbs" value="<%= h @ita_name %>">
+  <input type="hidden" name="bbs" value="<%= h @board.id %>">
   <input type="hidden" name="key" value="<%= h @thread.id %>">
 </form>
 
-<a href="/<%= h @ita_name %>/">スレッド一覧</a>
+<a href="/<%= h @board.id %>/">スレッド一覧</a>
