@@ -1,0 +1,29 @@
+{
+  "name": "identicon.js",
+  "main": [
+    "pnglib.js",
+    "identicon.js"
+  ],
+  "homepage": "https://github.com/stewartlord/identicon.js",
+  "authors": [
+    "stewardlord"
+  ],
+  "description": "GitHub-style identicons in JS with no server-side processing.",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "identicon"
+  ],
+  "license": "BSD",
+  "_release": "c70d9a1dd7",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "c70d9a1dd7dc7fc34890cf7bc1653ae4f3b1d8e0"
+  },
+  "_source": "https://github.com/stewartlord/identicon.js.git",
+  "_target": "*",
+  "_originalSource": "identicon",
+  "_direct": true
+}
