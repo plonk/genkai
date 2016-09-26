@@ -417,6 +417,7 @@ module Genkai
       t.close
 
       File.rename(t.path, dat_path(params['bbs'], params['key']))
+      File.chmod(0644, dat_path(params['bbs'], params['key']))
 
       @head = "<meta http-equiv=\"refresh\" content=\"1; url=#{h back}\">"
       @title = '書きこみました'
