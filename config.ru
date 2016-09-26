@@ -477,6 +477,4 @@ module Genkai
   end
 end
 
-require 'rack/mount'
-
 run Genkai::Application
