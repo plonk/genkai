@@ -16,24 +16,17 @@
     </div>
 </div>
 
-      <div class="panel-group" id="accordion">
-        <% @threads.each.with_index do |thread, i| %>
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <!-- href="/test/read.cgi/<%= @board.id + '/' + thread.id %>" -->
-            <a class="panel-title" data-toggle="collapse" href="#collapse<%= i %>" data-parent="#accordion">
-              <b>
-                <%= thread.name %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.number_posts %></span>
-              </b>
-            </a>
-          </div>
-          <div id="collapse<%= i %>" class="panel-collapse collapse <%= i==0 ? 'in' : '' %>">
-            <%= erb :post_media_object, locals: { post: thread.posts(1..Float::INFINITY)[0] }  %>
-          </div>
-        </div>
-        <% end %>
-      </div>
-
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h4>スレッド一覧</h4>
+  </div>
+  <div class="list-group">
+    <% @threads.each.with_index do |thread, i| %>
+      <a class="list-group-item" href="/test/read.cgi/<%= @board.id + '/' + thread.id %>">
+        <%= thread.name %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.number_posts %></span></a>
+    <% end %>
+  </div>
+</div>
 
   <div class="panel panel-default">
     <div class="panel-heading">
