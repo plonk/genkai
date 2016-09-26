@@ -7,11 +7,8 @@
       document.write('<img width=64 height=64 src="data:image/png;base64,' + data + '" title="ID:' + hash + '">');
     </script>
     <% else %>
-    <div style="width: 64px; height: 64px; background-color: #ccc"></div>
+    <div style="width: 64px; height: 64px; background-color: #f0f0f0; text-align: center; line-height: 64px"><span class="glyphicon glyphicon-user text-muted" style="font-size: 45px; vertical-align: middle"></span></div>
     <% end %>
-    <div style="width: 64px; height: 64px; position: relative; left: 0px; top: -64px; text-align: center; line-height: 64px; font-size: 20px; font-weight: bold; color: #f0f0f0; text-shadow: 2px 2px 7px black">
-      <%= post.no %>
-    </div>
   </div>
   <div class="media-body">
     <h4 class="media-heading">
@@ -22,6 +19,9 @@
       <% end %>
       <small>
         <%= h post.date_without_id %>
+      </small>
+      <small style="float: right">
+        - <%= h post.no %> -
       </small>
     </h4>
     <span style="font-family: &quot;MS PGothic&quot;; font-size: 16px; line-height: 1em;"><%= post.body %></span>
