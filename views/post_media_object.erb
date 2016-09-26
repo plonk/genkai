@@ -1,0 +1,27 @@
+<div class="media">
+  <div class="media-left">
+    <% if post.id %>
+    <script>
+      var hash = <%= post.id.inspect %>;
+      var data = new Identicon(hash, {size: 64}).toString();
+      document.write('<img width=64 height=64 src="data:image/png;base64,' + data + '" title="ID:' + hash + '">');
+    </script>
+    <% else %>
+    <div style="width: 64px; height: 64px; background-color: #f0f0f0"></div>
+    <% end %>
+  </div>
+  <div class="media-body">
+    <h4 class="media-heading">
+      <small><%= h post.no %>:</small>
+      <% if post.mail.empty? then %>
+      <%= h post.name %>
+      <% else %>
+      <a href="mailto:<%= h post.mail %>"><%= h post.name %></a>
+      <% end %>
+      <small>
+        <%= h post.date_without_id %>
+      </small>
+    </h4>
+    <span style="font-family: &quot;MS PGothic&quot;; font-size: 16px; line-height: 1em;"><%= post.body %></span>
+  </div>
+</div>

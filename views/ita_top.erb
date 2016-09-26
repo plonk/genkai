@@ -1,13 +1,47 @@
-<h1>
-<%= @board.settings['BBS_TITLE'] %>
-</h1>
+<ol class="breadcrumb">
+  <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a></li>
+  <li class="active"><%= h @board.title %></li>
+</ol>
 
-<div>
-<%= @board.local_rules %>
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h1>
+        <%= @board.settings['BBS_TITLE'] %>
+      </h1>
+    </div>
+
+    <div class="panel-body">
+      <%= @board.local_rules %>
+    </div>
 </div>
 
-<ul>
-<% @threads.each do |thread| %>
-<li><a href="/test/read.cgi/<%= @board.id + '/' + thread.id %>"><%= thread.name %></a> (<%= thread.number_posts %>)</li>
-<% end %>
-</ul>
+      <div class="panel-group" id="accordion">
+        <% @threads.each.with_index do |thread, i| %>
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <!-- href="/test/read.cgi/<%= @board.id + '/' + thread.id %>" -->
+            <a class="panel-title" data-toggle="collapse" href="#collapse<%= i %>" data-parent="#accordion">
+              <b>
+                <%= thread.name %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.number_posts %></span>
+              </b>
+            </a>
+          </div>
+          <div id="collapse<%= i %>" class="panel-collapse collapse <%= i==0 ? 'in' : '' %>">
+            <%= erb :post_media_object, locals: { post: thread.posts(1..Float::INFINITY)[0] }  %>
+          </div>
+        </div>
+        <% end %>
+      </div>
+
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4>スレッド作成</h4>
+    </div>
+    <div class="panel-body">
+      <%= erb :thread_create_form %>
+    </div>
+  </div>
+
+</div>
