@@ -8,6 +8,10 @@ class String
     encode('CP932')
   end
 
+  def as_utf8
+    dup.force_encoding('UTF-8')
+  end
+
   def as_sjis
     dup.force_encoding('CP932')
   end
@@ -132,7 +136,7 @@ module Genkai
       [post.name, post.mail, post.date, post.body, thread_title]
         .join('<>')
         .concat("\n")
-        .encode('CP932')
+        .to_sjis
     end
 
     def format_date(time)
@@ -352,7 +356,7 @@ module Genkai
              .join
 
       content_type PLAIN_SJIS
-      sjis body.encode('CP932')
+      sjis body.to_sjis
     end
 
     get '/:ita/SETTING.TXT' do |ita|
@@ -398,7 +402,7 @@ module Genkai
 
       name, mail, body = params
                          .values_at('FROM', 'mail', 'MESSAGE')
-                         .map { |s| s.force_encoding('CP932').to_utf8 }
+                         .map { |s| s.as_sjis.to_utf8 }
       if name.blank?
         name = board.settings.default_name
       end
@@ -406,11 +410,11 @@ module Genkai
       line = [post.name, post.mail, post.date, post.body, ''].join('<>') + "\n"
 
       t = Tempfile.new(['genkai', '.dat'], 'tmp')
-      t.write(thread.data.encode('CP932'))
-      t.puts(line.encode('CP932'))
+      t.write(thread.data.to_sjis)
+      t.puts(line.to_sjis)
 
       if thread.number_posts == 999
-        t.puts '<><><> このスレッドは１０００を超えました。 <br> もう書けないので、新しいスレッドを立ててくださいです。。。 <>'.encode('CP932')
+        t.puts '<><><> このスレッドは１０００を超えました。 <br> もう書けないので、新しいスレッドを立ててくださいです。。。 <>'.to_sjis
       end
       t.close
 
