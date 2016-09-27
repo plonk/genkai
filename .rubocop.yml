@@ -10,6 +10,10 @@ Style/AsciiComments:
   Exclude:
     - '**/*'
 
+Style/PerlBackrefs:
+  Exclude:
+    - '**/*'
+
 Style/Documentation:
   Exclude:
     - 'spec/**/*'
