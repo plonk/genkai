@@ -23,7 +23,7 @@
   <div class="list-group">
     <% @threads.each.with_index do |thread, i| %>
       <a class="list-group-item" href="/test/read.cgi/<%= @board.id + '/' + thread.id %>">
-        <%= thread.name %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.number_posts %></span></a>
+        <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.posts.size %></span></a>
     <% end %>
   </div>
 </div>

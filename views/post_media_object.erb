@@ -1,9 +1,18 @@
+<script>
+if (typeof($cache) == "undefined")
+  $cache = {};
+</script>
 <div class="media">
   <div class="media-left">
     <% if post.id %>
     <script>
       var hash = <%= post.id.inspect %>;
-      var data = new Identicon(hash, {size: 64}).toString();
+      var data;
+      if (!$cache[hash]) {
+        $cache[hash] = new Identicon(hash, {size: 64}).toString()
+        data = $cache[hash];
+      }
+      data = $cache[hash];
       document.write('<img width=64 height=64 src="data:image/png;base64,' + data + '" title="ID:' + hash + '">');
     </script>
     <% else %>
@@ -18,10 +27,10 @@
       <a href="mailto:<%= h post.mail %>"><%= h post.name %></a>
       <% end %>
       <small>
-        <%= h post.date_without_id %>
+        <%= h post.date_proper %>
       </small>
       <small style="float: right">
-        - <%= h post.no %> -
+        - FIXME -
       </small>
     </h4>
     <span style="font-family: &quot;MS PGothic&quot;; font-size: 16px; line-height: 1em;"><%= post.body %></span>

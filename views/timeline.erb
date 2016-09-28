@@ -1,12 +1,16 @@
 <ol class="breadcrumb">
   <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a></li>
   <li><a href="/<%= h @board.id %>/"><%= h @board.title %></a></li>
-  <li class="active"><%= h @thread.title %></li>
+  <li class="active"><%= h @thread.subject %></li>
 </ol>
+
 
 <div class="container">
 
-<h1><%= h @thread.name %></h1>
+<h3>
+  <a href="/test/read.cgi/<%= @board.id %>/<%= @thread.id %>"><%= h @thread.subject %></a>
+  <a class="btn btn-default btn-sm" href="/<%= File.join(@board.id, 'dat', @thread.id + '.dat') %>">.dat</a>
+</h3>
 
 <div style="margin: 20px 0px 20px 0px">
 <% @posts.each do |post| %>
@@ -25,7 +29,7 @@
           <label class="control-label">
             名前
           </label>
-          <input class="form-control" name="FROM" type="text" placeholder="<%= h @board.settings.default_name %>">
+          <input class="form-control" name="FROM" type="text" placeholder="<%= h @board.default_name %>">
         </div>
         <div class="form-group">
           <label class="control-label">

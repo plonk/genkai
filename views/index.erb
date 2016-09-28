@@ -1,8 +1,10 @@
 <div class="container">
 
+<h1><%= @title %></h1>
+
 <ul class="list-group">
-<% @itas.each do |ita| %>
-<li class="list-group-item"><a href="/<%= ita %>/"><%= ita %></a></li>
+<% @boards.each do |board| %>
+<li class="list-group-item"><a href="/<%= board.id %>/"><%= board.title %></a></li>
 <% end %>
 </ul>
 
