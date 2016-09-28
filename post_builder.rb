@@ -11,6 +11,10 @@ module Genkai
           "<a href=\"/test/read.cgi/#{board_id}/#{thread_id}/#{$1}\">#{str}</a>"
         end
       end
+
+      def format_date(time)
+        time.strftime('%Y/%m/%d(%%s) %H:%M:%S') % '日月火水木金土'[time.wday]
+      end
     end
 
     def initialize(board, thread, client)
@@ -24,7 +28,7 @@ module Genkai
         raw_name = @board.default_name
       end
 
-      date = format_date(Time.now.localtime)
+      date = PostBuilder.format_date(Time.now.localtime)
       if requires_id?(raw_mail)
         date = "#{date} ID:#{client_id}"
       end
@@ -50,10 +54,6 @@ module Genkai
     end
 
     private
-
-    def format_date(time)
-      time.strftime('%Y/%m/%d(%%s) %H:%M:%S') % '日月火水木金土'[time.wday]
-    end
 
     ESCAPE_TABLE = { '<' => '&lt;', '>' => '&gt;', '&' => '&amp;' }.freeze
     def escape_field(str)

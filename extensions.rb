@@ -25,3 +25,11 @@ class Object
     end
   end
 end
+
+require_relative 'post_builder'
+
+class Time
+  def to_nichan
+    Genkai::PostBuilder.format_date(self)
+  end
+end

@@ -27,6 +27,10 @@ module Genkai
       File.mtime(@path)
     end
 
+    def created_at
+      Time.at(id.to_i).localtime
+    end
+
     def save
       # FIXME: アトミックなデータの置き換え。
       AtomicWriteFile.open(@path, 'tmp', encoding: 'CP932') do |f|

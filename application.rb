@@ -15,6 +15,9 @@ module Genkai
     # ファイルがUTF8指定になることを防ぐ。
     set :add_charset, []
 
+    # delete や patch などのメソッドが使えるようにする
+    use Rack::MethodOverride
+
     configure do
       mime_type :dat, PLAIN_SJIS
     end
@@ -155,6 +158,13 @@ module Genkai
 
       content_type HTML_SJIS
       sjis erb :admin_timeline
+    end
+
+    post '/admin/:ita/:sure/delete-posts' do |ita, sure|
+      params['post_numbers'].inspect
+    end
+
+    delete '/admin/:ita/:sure' do |ita, sure|
     end
 
     require 'tempfile'

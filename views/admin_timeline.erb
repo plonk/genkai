@@ -12,22 +12,42 @@
     <span class="badge"><%= @thread.posts.size %></span>
   </h1>
 
-  <div class="form-group">
-    <div class="btn-group"  style="float: right">
-      <a class="btn btn-default" href="/<%= File.join(@board.id, 'dat', @thread.id + '.dat') %>">.dat</a>
-    </div>
-  </div>
+  <form id="delete_form" action="/admin/<%= @board.id %>/<%= @thread.id %>/delete-posts" method="POST">
+  </form>
 
-  <div style="margin: 20px 0px 20px 0px">
+  <table class="table">
     <% @posts.each do |post| %>
-      <%= erb :post_media_object, locals: { post: post } %>
+      <tr>
+        <td>
+          <% if post.number == 1 %>
+            <input type="checkbox" disabled title="1は削除できません。スレッドごと削除してください。">
+          <% else %>
+            <input form="delete_form" name="post_numbers[]" type="checkbox" value="<%= post.number %>">
+          <% end %>
+        </td>
+        <td><b><%= post.number %></b></td>
+        <td>
+          <%= post.name %>
+          <span class="text-success"><%= post.mail %></span>
+          <span class="text-info"><%= post.id ? "ID:#{post.id}" : "" %></span>
+        </td>
+        <td><%= post.date_proper %></td>
+        <td>
+          <%= post.body %>
+        </td>
+      </tr>
     <% end %>
-  </div>
+  </table>
 
   <div class="form-group">
-    <a class="btn btn-default btn-block" href="#top">
-      <span class="glyphicon glyphicon-arrow-up"></span>
-      上に戻る
-    </a>
+    <input form="delete_form" class="btn btn-warning btn-block" type="submit" value="選択した投稿を削除">
   </div>
+
+  <form action="/admin/<%= @board.id %>/<%= @thread.id %>" method="POST">
+    <input type="hidden" name="_method" value="DELETE">
+    <div class="form-group">
+      <input class="btn btn-danger btn-block" type="submit" value="スレッドごと削除">
+    </div>
+  </form>
+
 </div>
