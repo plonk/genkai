@@ -2,6 +2,7 @@ require_relative 'settings'
 require_relative 'board'
 require_relative 'thread'
 require_relative 'post_builder'
+require_relative 'numbered_element'
 
 require 'ostruct'
 
@@ -80,7 +81,7 @@ module Genkai
       halt 404, "そんなスレないです。(#{sure})" unless @thread
       @title = @thread.subject
 
-      all_posts = @thread.posts
+      all_posts = NumberedElement.to_numbered_elements @thread.posts
 
       require_first_post = false
       case cmd
@@ -106,7 +107,7 @@ module Genkai
       end
 
       # FIXME
-      if require_first_post && @posts.first.no != '1'
+      if require_first_post && @posts.first.number != 1
         # 1レス目が含まれていなかったら、先頭に追加する。
         @posts.unshift(all_posts.first)
       end
@@ -119,7 +120,7 @@ module Genkai
       @board = Board.new(File.join('public', ita))
       @thread = @board.threads.find { |th| th.id == sure }
       halt 404, "そんなスレないです。(#{sure})" unless @thread
-      @posts = @thread.posts
+      @posts = NumberedElement.to_numbered_elements @thread.posts
       @title = @thread.subject
 
       content_type HTML_SJIS
@@ -135,16 +136,25 @@ module Genkai
       sjis body.to_sjis
     end
 
-    get '/:ita/SETTING.TXT' do |ita|
-      halt 404, "そんな板ないです。(#{ita})" unless File.directory? board_path(ita)
+    # get '/:ita/SETTING.TXT' do |ita|
+    #   halt 404, "そんな板ないです。(#{ita})" unless File.directory? board_path(ita)
 
-      content_type PLAIN_SJIS
-      sjis "BBS_TITLE=集落板\n"
-    end
+    #   content_type PLAIN_SJIS
+    #   sjis "BBS_TITLE=集落板\n"
+    # end
 
-    get '/admin/*' do
-      authenticate!
-      'admin'
+    # get '/admin/*' do
+    #   authenticate!
+    #   'admin'
+    # end
+
+    get '/admin/:ita/:sure' do |ita, sure|
+      @board = Board.new File.join('public', ita)
+      @thread = ThreadFile.new File.join('public', ita, 'dat', "#{sure}.dat")
+      @posts = NumberedElement.to_numbered_elements @thread.posts
+
+      content_type HTML_SJIS
+      sjis erb :admin_timeline
     end
 
     require 'tempfile'

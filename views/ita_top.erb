@@ -14,27 +14,30 @@
     <div class="panel-body">
       <%= @board.local_rules %>
     </div>
-</div>
+  </div>
 
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h4>スレッド一覧</h4>
+
+  <div class="form-group">
+    <button class="btn btn-primary btn-block" data-toggle="modal" data-target="#create_thread_dialog">新規スレッド作成...</button>
   </div>
-  <div class="list-group">
-    <% @threads.each.with_index do |thread, i| %>
-      <a class="list-group-item" href="/test/read.cgi/<%= @board.id + '/' + thread.id %>">
-        <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.posts.size %></span></a>
-    <% end %>
-  </div>
-</div>
 
   <div class="panel panel-default">
     <div class="panel-heading">
-      <h4>スレッド作成</h4>
+      <h4>スレッド一覧</h4>
     </div>
-    <div class="panel-body">
-      <%= erb :thread_create_form %>
+    <div class="list-group">
+      <% @threads.each.with_index do |thread, i| %>
+        <a class="list-group-item" href="/test/read.cgi/<%= @board.id + '/' + thread.id %>">
+          <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.posts.size %></span></a>
+      <% end %>
     </div>
   </div>
 
+  <div class="modal fade" id="create_thread_dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <%= erb :thread_create_form %>
+      </div>
+    </div>
+  </div>
 </div>

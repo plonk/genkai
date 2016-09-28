@@ -2,3 +2,8 @@ footer {
   padding: 8px 15px 8px 15px;
   background-color: rgb(245, 245, 245);
 }
+
+.media {
+    padding: 10px;
+    margin: 0;
+}

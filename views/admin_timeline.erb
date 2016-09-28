@@ -13,14 +13,10 @@
   </h1>
 
   <div class="form-group">
-    <button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#post_dialog">書き込み...</button>
     <div class="btn-group"  style="float: right">
       <a class="btn btn-default" href="/<%= File.join(@board.id, 'dat', @thread.id + '.dat') %>">.dat</a>
-      <a class="btn btn-default" href="/admin/<%= File.join(@board.id, @thread.id) %>">レス管理</a>
     </div>
-
   </div>
-
 
   <div style="margin: 20px 0px 20px 0px">
     <% @posts.each do |post| %>
@@ -34,6 +30,4 @@
       上に戻る
     </a>
   </div>
-
-  <%= erb :post_dialog %>
 </div>
