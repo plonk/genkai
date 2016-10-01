@@ -151,6 +151,7 @@ module Genkai
     #   'admin'
     # end
 
+    # スレの編集。削除するレスの選択。
     get '/admin/:ita/:sure' do |ita, sure|
       @board = Board.new File.join('public', ita)
       @thread = ThreadFile.new File.join('public', ita, 'dat', "#{sure}.dat")
@@ -160,14 +161,24 @@ module Genkai
       sjis erb :admin_timeline
     end
 
+    # レスの削除。
     post '/admin/:ita/:sure/delete-posts' do |ita, sure|
       params['post_numbers'].inspect
     end
 
+    # スレの削除。
     delete '/admin/:ita/:sure' do |ita, sure|
     end
 
-    require 'tempfile'
+    # 板の設定。
+    get '/admin/:ita' do |ita|
+      @board = Board.new(board_path(ita))
+
+      @title = "“#{ @board.id }”の設定"
+
+      content_type HTML_SJIS
+      sjis erb :admin_board_settings
+    end
 
     def dat_path(board, thread_id)
       File.join('public', board, 'dat', "#{thread_id}.dat")

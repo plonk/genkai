@@ -35,6 +35,24 @@ module Genkai
       ''
     end
 
+    def local_rules=(text)
+      AtomicWriteFile.new(@path / 'head.txt', encoding: 'CP932') do |f|
+        f.write(text)
+      end
+    end
+
+    def thread_stop_message
+      File.read(@path / '1000.txt', encoding: 'CP932').to_utf8
+    rescue Errno::ENOENT
+      ''
+    end
+
+    def thread_stop_message=(text)
+      AtomicWriteFile.new(@path / '1000.txt', encoding: 'CP932') do |f|
+        f.write(text)
+      end
+    end
+
     def title
       settings['BBS_TITLE']
     end

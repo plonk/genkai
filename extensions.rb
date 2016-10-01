@@ -16,6 +16,12 @@ class String
   end
 end
 
+class String
+  def /(other)
+    File.join(self, other)
+  end
+end
+
 class Object
   def blank?
     case self
