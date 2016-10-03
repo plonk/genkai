@@ -132,4 +132,60 @@ module Genkai
                '')
     end
   end
+
+  # 読み取り用に共有ロックを行なう。
+  class ImmutableBoard < Board
+    def initialize(path)
+      @lockfile = File.open(path, 'r')
+      @lockfile.flock(File::LOCK_SH)
+      super(path)
+
+      # 設定の保存を禁止する。
+      class << settings
+        def save
+          raise 'forbidden'
+        end
+      end
+    end
+
+    def close
+      @lockfile.flock(File::LOCK_UN)
+      @lockfile.close
+    end
+
+    # 呼び出しを禁止するメソッド。
+    def id_policy=(_sym)
+      raise 'forbidden'
+    end
+
+    def create_thread
+      raise 'forbidden'
+    end
+
+    def thread_stop_message=(_text)
+      raise 'forbidden'
+    end
+
+    def local_rules=(_text)
+      raise 'forbidden'
+    end
+
+    def delete_thread(_id)
+      raise 'forbidden'
+    end
+  end
+
+  # 書き込み用に排他ロックを行なう。
+  class MutableBoard < Board
+    def initialize(path)
+      @lockfile = File.open(path, 'r')
+      @lockfile.flock(File::LOCK_EX)
+      super(path)
+    end
+
+    def close
+      @lockfile.flock(File::LOCK_UN)
+      @lockfile.close
+    end
+  end
 end

@@ -60,7 +60,7 @@ module Genkai
 
     get '/' do
       @boards = Dir.glob('public/*/SETTING.TXT').map do |path|
-        Board.new(File.dirname(path))
+        ImmutableBoard.new(File.dirname(path))
       end
       @title = @site_settings['SITE_NAME']
 
@@ -73,8 +73,8 @@ module Genkai
     end
 
     # 板トップ
-    get '/:board/' do |board|
-      @threads = @board.threads
+    get '/:board/' do
+      @threads = @board.threads.sort_by(&:mtime).reverse
       @title = @board.title
 
       content_type HTML_SJIS
@@ -82,19 +82,28 @@ module Genkai
     end
 
     before '/:board/*' do |board, _rest|
-      next if board == 'test'
+      next if board == 'test' || board == 'admin'
 
-      @board = Board.new(board_path(board))
+      @board = ImmutableBoard.new(board_path(board))
     end
 
-    before '/admin/:board/*' do |board, _rest|
-      @board = Board.new(board_path(board))
+    before '/admin/:board/?*' do |board, _rest|
+      # get メソッドの時は Immutable でいいか。
+      @board = case request.request_method
+               when 'GET'
+                 ImmutableBoard.new(board_path(board))
+               else
+                 MutableBoard.new(board_path(board))
+               end
     end
 
-    get '/test/read.cgi/:board/:sure/:cmd' do |board, sure, cmd|
-      @board = Board.new(File.join('public', board))
+    before '/test/read.cgi/:board/:sure/?*' do |board, sure, _rest|
+      @board = ImmutableBoard.new(board_path(board))
       @thread = @board.threads.find { |th| th.id == sure }
       halt 404, "そんなスレないです。(#{sure})" unless @thread
+    end
+
+    get '/test/read.cgi/:board/:sure/:cmd' do |_, _, cmd|
       @title = @thread.subject
 
       all_posts = NumberedElement.to_numbered_elements @thread.posts
@@ -130,10 +139,7 @@ module Genkai
       sjis erb :timeline
     end
 
-    get '/test/read.cgi/:board/:sure' do |board, sure|
-      @board = Board.new(File.join('public', board))
-      @thread = @board.threads.find { |th| th.id == sure }
-      halt 404, "そんなスレないです。(#{sure})" unless @thread
+    get '/test/read.cgi/:board/:sure' do |_, _|
       @posts = NumberedElement.to_numbered_elements @thread.posts
       @title = @thread.subject
 
@@ -141,7 +147,7 @@ module Genkai
       sjis erb :timeline
     end
 
-    get '/:board/subject.txt' do |board|
+    get '/:board/subject.txt' do
       renderer = ThreadListRenderer.new(@board.threads)
 
       content_type PLAIN_SJIS
@@ -152,7 +158,7 @@ module Genkai
     #   authenticate!
     # end
 
-    get '/admin/:board/threads' do |board|
+    get '/admin/:board/threads' do
       @threads = @board.threads
 
       content_type HTML_SJIS
@@ -169,7 +175,7 @@ module Genkai
     end
 
     # レスの削除。
-    post '/admin/:board/:sure/delete-posts' do |board, sure|
+    post '/admin/:board/:sure/delete-posts' do |_board, sure|
       @thread = @board.threads.find { |t| t.id == sure }
       raise 'no such thread' unless @thread
 
@@ -203,14 +209,15 @@ module Genkai
     end
 
     # 板の設定。
-    get '/admin/:board' do |board|
+    get '/admin/:board' do
       @title = "“#{@board.id}”の設定"
 
       content_type HTML_SJIS
       sjis erb :admin_board_settings
     end
 
-    patch '/admin/:board' do |board|
+    patch '/admin/:board' do
+      sleep 10
       convert_params_to_utf8!
 
       params.select { |key, _| key =~ /^settings_/ }
@@ -246,9 +253,8 @@ module Genkai
     # MESSAGE: 本文
     def post_message
       convert_params_to_utf8!
-      check_non_blank!('bbs', 'key', 'MESSAGE')
+      check_non_blank!('key', 'MESSAGE')
 
-      board = Board.new(File.join('public', params['bbs']))
       thread = ThreadFile.new(dat_path(params['bbs'], params['key']))
       if thread.posts.size >= 1000
         @title = 'ＥＲＲＯＲ！'
@@ -257,10 +263,8 @@ module Genkai
         return sjis erb :post_error
       end
 
-      name, mail, body = params.values_at('FROM', 'mail', 'MESSAGE')
-
-      builder = PostBuilder.new(board, thread, @client)
-      post = builder.create_post(name, mail, body)
+      builder = PostBuilder.new(@board, thread, @client)
+      post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE'))
 
       thread.posts << post
       thread.save
@@ -279,10 +283,7 @@ module Genkai
                     else
                       value.as_sjis.to_utf8
                     end
-        [
-          key.as_sjis.to_utf8,
-          new_value
-        ]
+        [key.as_sjis.to_utf8, new_value]
       end.to_h
       params.replace(new_params)
     end
@@ -299,28 +300,30 @@ module Genkai
     # MESSAGE: 本文
     def create_thread
       convert_params_to_utf8!
-      check_non_blank!('subject', 'bbs', 'MESSAGE')
-
-      board = Board.new(File.join('public', params['bbs']))
-      name, mail, body = params.values_at('FROM', 'mail', 'MESSAGE')
+      check_non_blank!('subject', 'MESSAGE')
 
       begin
-        thread = board.create_thread
+        thread = @board.create_thread
       rescue Board::ThreadCreateError => e
         # FIXME: ＥＲＲＯＲ！をタイトルとしたHTMLに変更する。
         halt 500, e.message
       end
 
-      builder = PostBuilder.new(board, thread, @client)
-      post = builder.create_post(name, mail, body, params['subject'])
+      builder = PostBuilder.new(@board, thread, @client)
+      post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE', 'subject'))
 
       thread.posts << post
       thread.save
 
-      @head = meta_refresh_tag(1, "/test/read.cgi/#{board.id}/#{thread.id}")
+      @head = meta_refresh_tag(1, "/test/read.cgi/#{@board.id}/#{thread.id}")
       @title = '書き込みました'
       content_type HTML_SJIS
       sjis erb :posted
+    end
+
+    before '/test/bbs.cgi' do
+      check_non_blank!('bbs')
+      @board = MutableBoard.new(board_path(params['bbs']))
     end
 
     post '/test/bbs.cgi' do
@@ -339,6 +342,12 @@ module Genkai
     set :show_exceptions, :after_handler
     error Board::NotFoundError do |e|
       halt 404, "そんな板ないです。(#{e.message})"
+    end
+
+    # 例外が起ころうが、ここのコードは実行される。
+    after do
+      # 板のロックを解除する。
+      @board.close if @board
     end
   end
 end
