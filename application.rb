@@ -237,8 +237,10 @@ module Genkai
 
       @board.settings.save
 
+      @title = "“#{ @board.id }”の設定"
+
       content_type HTML_SJIS
-      sjis erb :debug
+      sjis erb :admin_board_settings
     end
 
     def dat_path(board, thread_id)
