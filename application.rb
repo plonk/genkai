@@ -4,6 +4,7 @@ require_relative 'board'
 require_relative 'thread'
 require_relative 'post_builder'
 require_relative 'numbered_element'
+require_relative 'thread_list_renderer'
 
 require 'ostruct'
 
@@ -67,13 +68,12 @@ module Genkai
       sjis erb :index
     end
 
-    get '/:ita' do |ita|
-      redirect to("/#{ita}/")
+    get '/:board' do |board|
+      redirect to("/#{board}/")
     end
 
     # 板トップ
-    get '/:ita/' do |ita|
-      @board = Board.new(File.join('public', ita))
+    get '/:board/' do |board|
       @threads = @board.threads
       @title = @board.title
 
@@ -81,8 +81,18 @@ module Genkai
       sjis erb :ita_top
     end
 
-    get '/test/read.cgi/:ita/:sure/:cmd' do |ita, sure, cmd|
-      @board = Board.new(File.join('public', ita))
+    before '/:board/*' do |board, _rest|
+      next if board == 'test'
+
+      @board = Board.new(board_path(board))
+    end
+
+    before '/admin/:board/*' do |board, _rest|
+      @board = Board.new(board_path(board))
+    end
+
+    get '/test/read.cgi/:board/:sure/:cmd' do |board, sure, cmd|
+      @board = Board.new(File.join('public', board))
       @thread = @board.threads.find { |th| th.id == sure }
       halt 404, "そんなスレないです。(#{sure})" unless @thread
       @title = @thread.subject
@@ -120,8 +130,8 @@ module Genkai
       sjis erb :timeline
     end
 
-    get '/test/read.cgi/:ita/:sure' do |ita, sure|
-      @board = Board.new(File.join('public', ita))
+    get '/test/read.cgi/:board/:sure' do |board, sure|
+      @board = Board.new(File.join('public', board))
       @thread = @board.threads.find { |th| th.id == sure }
       halt 404, "そんなスレないです。(#{sure})" unless @thread
       @posts = NumberedElement.to_numbered_elements @thread.posts
@@ -131,23 +141,18 @@ module Genkai
       sjis erb :timeline
     end
 
-    get '/:ita/subject.txt' do |ita|
-      board = Board.new(File.join('public', ita))
-
-      body = board.threads.sort_by(&:mtime).reverse
-                  .map { |t| "#{t.id}.dat<>#{t.subject} (#{t.posts.size})\n" }
-                  .join
+    get '/:board/subject.txt' do |board|
+      renderer = ThreadListRenderer.new(@board.threads)
 
       content_type PLAIN_SJIS
-      sjis body.to_sjis
+      sjis renderer.render.to_sjis
     end
 
     # before '/admin/*' do
     #   authenticate!
     # end
 
-    get '/admin/:ita/threads' do |ita|
-      @board = Board.new File.join('public', ita)
+    get '/admin/:board/threads' do |board|
       @threads = @board.threads
 
       content_type HTML_SJIS
@@ -155,9 +160,8 @@ module Genkai
     end
 
     # スレの編集。削除するレスの選択。
-    get '/admin/:ita/:sure' do |ita, sure|
-      @board = Board.new File.join('public', ita)
-      @thread = ThreadFile.new File.join('public', ita, 'dat', "#{sure}.dat")
+    get '/admin/:board/:sure' do |board, sure|
+      @thread = ThreadFile.new File.join('public', board, 'dat', "#{sure}.dat")
       @posts = NumberedElement.to_numbered_elements @thread.posts
 
       content_type HTML_SJIS
@@ -165,8 +169,7 @@ module Genkai
     end
 
     # レスの削除。
-    post '/admin/:ita/:sure/delete-posts' do |ita, sure|
-      @board = Board.new(File.join('public', ita))
+    post '/admin/:board/:sure/delete-posts' do |board, sure|
       @thread = @board.threads.find { |t| t.id == sure }
       raise 'no such thread' unless @thread
 
@@ -183,9 +186,7 @@ module Genkai
     end
 
     # スレの削除。
-    delete '/admin/:ita/:sure' do |ita, sure|
-      @board = Board.new(board_path(ita))
-
+    delete '/admin/:board/:sure' do |board, sure|
       begin
         @board.delete_thread(sure.to_i)
       rescue Errno::ENOENT
@@ -194,27 +195,23 @@ module Genkai
         halt 500, e.message
       end
 
-      redirect to("/admin/#{ita}/threads")
+      redirect to("/admin/#{board}/threads")
     end
 
-    get '/admin/:ita/' do |ita|
-      redirect to("/admin/#{ita}")
+    get '/admin/:board/' do |board|
+      redirect to("/admin/#{board}")
     end
 
     # 板の設定。
-    get '/admin/:ita' do |ita|
-      @board = Board.new(board_path(ita))
-
+    get '/admin/:board' do |board|
       @title = "“#{@board.id}”の設定"
 
       content_type HTML_SJIS
       sjis erb :admin_board_settings
     end
 
-    patch '/admin/:ita' do |ita|
+    patch '/admin/:board' do |board|
       convert_params_to_utf8!
-
-      @board = Board.new(board_path(ita))
 
       params.select { |key, _| key =~ /^settings_/ }
             .each do |key, value|
