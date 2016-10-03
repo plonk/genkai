@@ -1,0 +1,15 @@
+<ol class="breadcrumb">
+  <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a></li>
+  <li><a href="/<%= @board.id %>/"><%= h @board.title %></a> (設定)</li>
+</ol>
+
+<div class="container">
+  <%= erb :admin_board_tabs, locals: { index: 1 } %>
+
+  <div class="list-group">
+    <% @threads.each.with_index do |thread, i| %>
+      <a class="list-group-item" href="/admin/<%= @board.id + '/' + thread.id %>">
+        <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.posts.size %></span></a>
+    <% end %>
+  </div>
+</div>

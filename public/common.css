@@ -1,6 +1,7 @@
 footer {
-  padding: 8px 15px 8px 15px;
-  background-color: rgb(245, 245, 245);
+    margin-top: 20px;
+    padding: 8px 15px 8px 15px;
+    background-color: rgb(245, 245, 245);
 }
 
 .media {
@@ -12,11 +13,20 @@ footer {
     font-family: monospace;
 }
 
+/* アスキーアートが崩れないようにレスの本文では、MSPゴシックを使う */
 .nichan-message {
     font-family: "MS PGothic";
     font-size: 16px;
+    line-height: 18px;
 }
 
+.nichan-message-small {
+    font-family: "MS PGothic";
+    font-size: 14px;
+    line-height: 16px;
+}
+
+/* テキストエリアのスクロールバーを消す */
 .no-resize {
     resize: none;
 }

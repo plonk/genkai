@@ -2,9 +2,12 @@ require_relative 'extensions'
 require_relative 'board'
 require_relative 'thread'
 require_relative 'post'
+require_relative 'string_helpers'
 
 module Genkai
   class PostBuilder
+    include StringHelpers
+
     class << self
       def linkify(escaped_body, board_id, thread_id)
         escaped_body.gsub(/&gt;&gt;(\d+(-\d+)?)/) do |str|
@@ -36,6 +39,7 @@ module Genkai
       Post.new(escape_field(raw_name),
                escape_field(raw_mail),
                date,
+
                escape_body(raw_body),
                raw_title)
     end
@@ -54,11 +58,6 @@ module Genkai
     end
 
     private
-
-    ESCAPE_TABLE = { '<' => '&lt;', '>' => '&gt;', '&' => '&amp;' }.freeze
-    def escape_field(str)
-      str.gsub(/[<>&]/) { |char| ESCAPE_TABLE[char] }
-    end
 
     def escape_body(body)
       ' ' + linkify(escape_field(body)).each_line.map(&:chomp).join(' <br> ') + ' '

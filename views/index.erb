@@ -2,10 +2,10 @@
 
 <h1><%= @title %></h1>
 
-<ul class="list-group">
+<div class="list-group">
 <% @boards.each do |board| %>
-<li class="list-group-item"><a href="/<%= board.id %>/"><%= board.title %></a></li>
+  <a class="list-group-item"href="/<%= board.id %>/"><%= board.title %></a>
 <% end %>
-</ul>
+</div>
 
 </div>

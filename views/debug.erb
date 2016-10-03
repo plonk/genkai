@@ -1,0 +1,10 @@
+<div class="container">
+  <table class="table">
+    <% params.each_pair do |key, value| %>
+      <tr>
+        <th><%= h key %></th>
+        <td><pre><%= h value %></pre></th>
+      </tr>
+    <% end %>
+  </table>
+</div>

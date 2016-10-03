@@ -67,6 +67,10 @@ module Genkai
       sjis erb :index
     end
 
+    get '/:ita' do |ita|
+      redirect to("/#{ita}/")
+    end
+
     # 板トップ
     get '/:ita/' do |ita|
       @board = Board.new(File.join('public', ita))
@@ -151,6 +155,14 @@ module Genkai
     #   'admin'
     # end
 
+    get '/admin/:ita/threads' do |ita|
+      @board = Board.new File.join('public', ita)
+      @threads = @board.threads
+      
+      content_type HTML_SJIS
+      sjis erb :admin_board_threads
+    end
+
     # スレの編集。削除するレスの選択。
     get '/admin/:ita/:sure' do |ita, sure|
       @board = Board.new File.join('public', ita)
@@ -163,11 +175,39 @@ module Genkai
 
     # レスの削除。
     post '/admin/:ita/:sure/delete-posts' do |ita, sure|
-      params['post_numbers'].inspect
+      @board = Board.new(File.join('public', ita))
+      @thread = @board.threads.find { |t| t.id == sure }
+      raise 'no such thread' unless @thread
+
+      nposts = @thread.posts.size
+
+      params['post_numbers'].map(&:to_i).each do |res_no|
+        raise 'range error' unless res_no.between?(1, nposts)
+
+        @thread.posts[res_no - 1] = @board.grave_stone
+      end
+      @thread.save
+
+      redirect back
     end
 
     # スレの削除。
     delete '/admin/:ita/:sure' do |ita, sure|
+      @board = Board.new(board_path(ita))
+
+      begin
+        @board.delete_thread(sure.to_i)
+      rescue Errno::ENOENT
+        halt 404, 'no such thread'
+      rescue => e
+        halt 500, e.message 
+      end
+
+      redirect to("/admin/#{ita}/threads")
+    end
+
+    get '/admin/:ita/' do |ita|
+      redirect to("/admin/#{ita}")
     end
 
     # 板の設定。
@@ -178,6 +218,27 @@ module Genkai
 
       content_type HTML_SJIS
       sjis erb :admin_board_settings
+    end
+
+    patch '/admin/:ita' do |ita|
+      convert_params_to_utf8!
+
+      @board = Board.new(board_path(ita))
+
+      params.select do |key, value|
+        key =~ /^settings_/
+      end.each do |key, value|
+        @board.settings[key.sub(/^settings_/, '')] = value
+      end
+
+      @board.local_rules = params['local_rules']
+      @board.thread_stop_message = params['thread_stop_message']
+      @board.id_policy = params['id_policy'].to_sym
+
+      @board.settings.save
+
+      content_type HTML_SJIS
+      sjis erb :debug
     end
 
     def dat_path(board, thread_id)
@@ -224,7 +285,12 @@ module Genkai
     end
 
     def convert_params_to_utf8!
-      new_params = params.to_a.map { |key, value| [key.as_sjis.to_utf8, value.as_sjis.to_utf8] }.to_h
+      new_params = params.to_a.map do |key, value|
+        [
+          key.as_sjis.to_utf8,
+          value.is_a?(Array) ? value.map(&:as_sjis).map(&:to_utf8) : value.as_sjis.to_utf8
+        ]
+      end.to_h
       params.replace(new_params)
     end
 

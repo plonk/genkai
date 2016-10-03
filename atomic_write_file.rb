@@ -8,8 +8,11 @@ class AtomicWriteFile
       0o666 & ~File.umask
     end
 
-    def open(path, dir, opts = {}, &block)
+    def open(path, dir = '/tmp', opts = {}, &block)
       raise 'block required' unless block
+      raise TypeError, 'path must be a String' unless path.is_a? String
+      raise TypeError, 'dir must be a String' unless dir.is_a? String
+      raise TypeError, 'opts must be a Hash' unless opts.is_a? Hash
 
       perm = AtomicWriteFile.permission(path)
       temp = Tempfile.new('atomic-write-file', dir, opts)

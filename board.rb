@@ -1,8 +1,11 @@
 require_relative 'settings'
 require_relative 'thread'
+require_relative 'string_helpers'
 
 module Genkai
   class Board
+    include StringHelpers
+
     attr_reader :settings
 
     class NotFoundError < StandardError; end
@@ -24,6 +27,11 @@ module Genkai
       Dir.glob(pat).map { |path| ThreadFile.new(path) }
     end
 
+    def delete_thread(id)
+      path = File.join(@path, 'dat', "#{id}.dat")
+      File.unlink(path)
+    end
+
     def id
       File.split(@path)[-1]
     end
@@ -36,20 +44,21 @@ module Genkai
     end
 
     def local_rules=(text)
-      AtomicWriteFile.new(@path / 'head.txt', encoding: 'CP932') do |f|
+      AtomicWriteFile.open(@path / 'head.txt', 'tmp', encoding: 'CP932') do |f|
         f.write(text)
       end
     end
 
     def thread_stop_message
-      File.read(@path / '1000.txt', encoding: 'CP932').to_utf8
+      unescape_1001 File.read(@path / '1000.txt', encoding: 'CP932').to_utf8
     rescue Errno::ENOENT
       ''
     end
 
     def thread_stop_message=(text)
-      AtomicWriteFile.new(@path / '1000.txt', encoding: 'CP932') do |f|
-        f.write(text)
+      escaped = escape_1001(text)
+      AtomicWriteFile.open(@path / '1000.txt', 'tmp', encoding: 'CP932') do |f|
+        f.write(escaped)
       end
     end
 
@@ -88,6 +97,25 @@ module Genkai
       end
     end
 
+    ID_POLICIES = [:no, :force, :optional]
+    def id_policy=(sym)
+      unless ID_POLICIES.include?(sym)
+        raise ArgumentError, 'invalid policy'
+      end
+
+      case sym
+      when :no
+        settings['BBS_NO_ID'] = 'checked'
+        settings.delete('BBS_FORCE_ID')
+      when :force
+        settings.delete('BBS_NO_ID')
+        settings['BBS_FORCE_ID'] = 'checked'
+      when :optional
+        settings.delete('BBS_NO_ID')
+        settings.delete('BBS_FORCE_ID')
+      end
+    end
+
     def default_name
       name = settings['BBS_NONAME_NAME']
       if name.blank?
@@ -95,6 +123,15 @@ module Genkai
       else
         name
       end
+    end
+
+    DEFAULT_DELETE_STRING = '＜削除＞'
+    def grave_stone
+      Post.new(DEFAULT_DELETE_STRING,
+               DEFAULT_DELETE_STRING,
+               DEFAULT_DELETE_STRING,
+               DEFAULT_DELETE_STRING,
+               '')
     end
   end
 end

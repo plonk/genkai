@@ -26,6 +26,10 @@ module Genkai
       @dictionary[key.to_s] = value
     end
 
+    def delete(key)
+      @dictionary.delete(key.to_s)
+    end
+
     private
 
     def hash_to_string(dict)

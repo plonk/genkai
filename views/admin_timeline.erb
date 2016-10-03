@@ -1,8 +1,8 @@
 <a name="top"></a>
 
 <ol class="breadcrumb">
-  <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a></li>
-  <li><a href="/<%= h @board.id %>/"><%= h @board.title %></a></li>
+  <li>設定</li>
+  <li><a href="/admin/<%= h @board.id %>/"><%= h @board.title %></a></li>
   <li class="active"><%= h @thread.subject %></li>
 </ol>
 
@@ -33,7 +33,7 @@
         </td>
         <td><%= post.date_proper %></td>
         <td>
-          <%= post.body %>
+          <pre class="nichan-message"><%= post.body %></pre>
         </td>
       </tr>
     <% end %>
