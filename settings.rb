@@ -1,7 +1,9 @@
+# frozen_string_literal: true
 require_relative 'extensions'
 require_relative 'atomic_write_file'
 
 module Genkai
+  # SETTING.TXT設定ファイル。
   class SettingsFile
     attr_reader :dictionary
 

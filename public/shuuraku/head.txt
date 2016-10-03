@@ -1,3 +1,1 @@
-<b>ローカルルール</b>
-<br>なかよくつかってね。
-<br><a href="http://www.google.com">ぐぐーる</a>
+<center>なかよく使ってね</center>

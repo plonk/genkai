@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'settings'
 require_relative 'board'
 require_relative 'thread'
@@ -7,6 +8,7 @@ require_relative 'numbered_element'
 require 'ostruct'
 
 module Genkai
+  # Genkaiアプリケーション。
   class Application < Sinatra::Base
     HTML_SJIS = 'text/html;charset=Shift_JIS'
     PLAIN_SJIS = 'text/plain;charset=Shift_JIS'
@@ -44,13 +46,11 @@ module Genkai
 
       def check_non_blank!(*keys)
         keys.each do |key|
-          if params[key].blank?
-            halt 400, "#{key} must not be blank"
-          end
+          halt 400, "#{key} must not be blank" if params[key].blank?
         end
       end
     end
-    
+
     before do
       @site_settings = SettingsFile.new('SETTING.TXT')
       @client = OpenStruct.new
@@ -58,9 +58,9 @@ module Genkai
     end
 
     get '/' do
-      @boards = Dir.glob('public/*/SETTING.TXT').map { |path|
+      @boards = Dir.glob('public/*/SETTING.TXT').map do |path|
         Board.new(File.dirname(path))
-      }
+      end
       @title = @site_settings['SITE_NAME']
 
       content_type HTML_SJIS
@@ -82,7 +82,6 @@ module Genkai
     end
 
     get '/test/read.cgi/:ita/:sure/:cmd' do |ita, sure, cmd|
-
       @board = Board.new(File.join('public', ita))
       @thread = @board.threads.find { |th| th.id == sure }
       halt 404, "そんなスレないです。(#{sure})" unless @thread
@@ -96,19 +95,17 @@ module Genkai
         @posts = all_posts.reverse[0, $1.to_i].reverse
         require_first_post = true
       when /^(\d+)-(\d+)$/
-        @posts = all_posts[($1.to_i-1)..($2.to_i-1)]
+        @posts = all_posts[($1.to_i - 1)..($2.to_i - 1)]
         require_first_post = true
       when /^(\d+)-$/
-        @posts = all_posts[($1.to_i-1)..-1]
+        @posts = all_posts[($1.to_i - 1)..-1]
         require_first_post = true
       when /^-(\d+)$/
-        @posts = all_posts[0..($1.to_i-1)]
+        @posts = all_posts[0..($1.to_i - 1)]
         require_first_post = true
       when /^(\d+)$/
-        @posts = [*all_posts[$1.to_i-1]]
-        if @posts.empty?
-          halt 404, "レス#{$1}はまだありません。"
-        end
+        @posts = [*all_posts[$1.to_i - 1]]
+        halt 404, "レス#{$1}はまだありません。" if @posts.empty?
       else
         halt 400, 'わかりません。'
       end
@@ -137,28 +134,22 @@ module Genkai
     get '/:ita/subject.txt' do |ita|
       board = Board.new(File.join('public', ita))
 
-      body = board.threads.sort_by(&:mtime).reverse.map { |t| "#{t.id}.dat<>#{t.subject} (#{t.posts.size})\n" }.join
+      body = board.threads.sort_by(&:mtime).reverse
+                  .map { |t| "#{t.id}.dat<>#{t.subject} (#{t.posts.size})\n" }
+                  .join
 
       content_type PLAIN_SJIS
       sjis body.to_sjis
     end
 
-    # get '/:ita/SETTING.TXT' do |ita|
-    #   halt 404, "そんな板ないです。(#{ita})" unless File.directory? board_path(ita)
-
-    #   content_type PLAIN_SJIS
-    #   sjis "BBS_TITLE=集落板\n"
-    # end
-
-    # get '/admin/*' do
+    # before '/admin/*' do
     #   authenticate!
-    #   'admin'
     # end
 
     get '/admin/:ita/threads' do |ita|
       @board = Board.new File.join('public', ita)
       @threads = @board.threads
-      
+
       content_type HTML_SJIS
       sjis erb :admin_board_threads
     end
@@ -200,7 +191,7 @@ module Genkai
       rescue Errno::ENOENT
         halt 404, 'no such thread'
       rescue => e
-        halt 500, e.message 
+        halt 500, e.message
       end
 
       redirect to("/admin/#{ita}/threads")
@@ -214,7 +205,7 @@ module Genkai
     get '/admin/:ita' do |ita|
       @board = Board.new(board_path(ita))
 
-      @title = "“#{ @board.id }”の設定"
+      @title = "“#{@board.id}”の設定"
 
       content_type HTML_SJIS
       sjis erb :admin_board_settings
@@ -225,9 +216,8 @@ module Genkai
 
       @board = Board.new(board_path(ita))
 
-      params.select do |key, value|
-        key =~ /^settings_/
-      end.each do |key, value|
+      params.select { |key, _| key =~ /^settings_/ }
+            .each do |key, value|
         @board.settings[key.sub(/^settings_/, '')] = value
       end
 
@@ -237,7 +227,7 @@ module Genkai
 
       @board.settings.save
 
-      @title = "“#{ @board.id }”の設定"
+      @title = "“#{@board.id}”の設定"
 
       content_type HTML_SJIS
       sjis erb :admin_board_settings
@@ -250,7 +240,6 @@ module Genkai
     def board_path(board)
       File.join('public', board)
     end
-
 
     # パラメーター
     # bbs: 板名
@@ -265,8 +254,8 @@ module Genkai
       board = Board.new(File.join('public', params['bbs']))
       thread = ThreadFile.new(dat_path(params['bbs'], params['key']))
       if thread.posts.size >= 1000
-        @title = "ＥＲＲＯＲ！"
-        @reason = "ＥＲＲＯＲ：スレッドストップです。"
+        @title = 'ＥＲＲＯＲ！'
+        @reason = 'ＥＲＲＯＲ：スレッドストップです。'
         content_type HTML_SJIS
         return sjis erb :post_error
       end
@@ -288,9 +277,14 @@ module Genkai
 
     def convert_params_to_utf8!
       new_params = params.to_a.map do |key, value|
+        new_value = if value.is_a?(Array)
+                      value.map(&:as_sjis).map(&:to_utf8)
+                    else
+                      value.as_sjis.to_utf8
+                    end
         [
           key.as_sjis.to_utf8,
-          value.is_a?(Array) ? value.map(&:as_sjis).map(&:to_utf8) : value.as_sjis.to_utf8
+          new_value
         ]
       end.to_h
       params.replace(new_params)
@@ -327,7 +321,7 @@ module Genkai
       thread.save
 
       @head = meta_refresh_tag(1, "/test/read.cgi/#{board.id}/#{thread.id}")
-      @title = "書き込みました"
+      @title = '書き込みました'
       content_type HTML_SJIS
       sjis erb :posted
     end

@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# 文字列をエスケープするメソッド。
 module StringHelpers
   ESCAPE_TABLE = { '<' => '&lt;', '>' => '&gt;', '&' => '&amp;' }.freeze
   UNESCAPE_TABLE = ESCAPE_TABLE.invert.freeze

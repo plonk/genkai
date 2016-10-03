@@ -1,5 +1,7 @@
+# frozen_string_literal: true
 require 'tempfile'
 
+# ファイルをアトミックに別の内容で置き換えるクラス。
 class AtomicWriteFile
   class << self
     def permission(path)

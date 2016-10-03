@@ -1,8 +1,10 @@
+# frozen_string_literal: true
 module Genkai
+  # DATファイルの一行で表わされるレスを表わすクラス。
   class Post
     class << self
       def from_line(str)
-        self.new(*str.chomp.split('<>', 5))
+        new(*str.chomp.split('<>', 5))
       end
     end
 
@@ -28,6 +30,5 @@ module Genkai
     def date_proper
       date.sub(%r{ ID:[A-Za-z0-9+/]+}, '')
     end
-
   end
 end

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'thread'
 require 'fileutils'
 include Genkai
@@ -15,7 +16,7 @@ raise unless thread.id == '1000000000'
 raise unless thread.posts.size == 1
 raise unless thread.subject == 'ほげほげ'
 
-post = Post.new('name','mail', '2016/09/26(月) 17:53:00', ' body ', '')
+post = Post.new('name', 'mail', '2016/09/26(月) 17:53:00', ' body ', '')
 thread.posts << post
 thread.save
 

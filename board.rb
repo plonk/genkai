@@ -1,8 +1,10 @@
+# frozen_string_literal: true
 require_relative 'settings'
 require_relative 'thread'
 require_relative 'string_helpers'
 
 module Genkai
+  # 板を表わすクラス。
   class Board
     include StringHelpers
 
@@ -79,9 +81,7 @@ module Genkai
       unix_time = Time.now.to_i
       dat_path = File.join('public', id, 'dat', "#{unix_time}.dat")
 
-      if File.exist? dat_path
-        raise ThreadCreateError, 'thread already exists'
-      end
+      raise ThreadCreateError, 'thread already exists' if File.exist? dat_path
       ThreadFile.new(dat_path)
     end
 
@@ -97,11 +97,9 @@ module Genkai
       end
     end
 
-    ID_POLICIES = [:no, :force, :optional]
+    ID_POLICIES = [:no, :force, :optional].freeze
     def id_policy=(sym)
-      unless ID_POLICIES.include?(sym)
-        raise ArgumentError, 'invalid policy'
-      end
+      raise ArgumentError, 'invalid policy' unless ID_POLICIES.include?(sym)
 
       case sym
       when :no

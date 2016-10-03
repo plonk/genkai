@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative 'extensions'
 require_relative 'board'
 require_relative 'thread'
@@ -5,6 +6,7 @@ require_relative 'post'
 require_relative 'string_helpers'
 
 module Genkai
+  # レスが投稿された時に、Postオブジェクトを作るクラス。
   class PostBuilder
     include StringHelpers
 
@@ -27,14 +29,10 @@ module Genkai
     end
 
     def create_post(raw_name, raw_mail, raw_body, raw_title = '')
-      if raw_name.blank?
-        raw_name = @board.default_name
-      end
+      raw_name = @board.default_name if raw_name.blank?
 
       date = PostBuilder.format_date(Time.now.localtime)
-      if requires_id?(raw_mail)
-        date = "#{date} ID:#{client_id}"
-      end
+      date = "#{date} ID:#{client_id}" if requires_id?(raw_mail)
 
       Post.new(escape_field(raw_name),
                escape_field(raw_mail),
@@ -45,7 +43,7 @@ module Genkai
     end
 
     def client_id
-      Digest::MD5.base64digest(@client.remote_addr)[0,8]
+      Digest::MD5.base64digest(@client.remote_addr)[0, 8]
     end
 
     def requires_id?(mail)
@@ -60,7 +58,8 @@ module Genkai
     private
 
     def escape_body(body)
-      ' ' + linkify(escape_field(body)).each_line.map(&:chomp).join(' <br> ') + ' '
+      lines = linkify(escape_field(body)).each_line.map(&:chomp)
+      ' ' + lines.join(' <br> ') + ' '
     end
 
     # レスアンカーをリンクにする

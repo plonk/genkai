@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# 文字コード変換用のメソッド。
 class String
   def to_utf8
     encode('UTF-8')
@@ -16,6 +19,7 @@ class String
   end
 end
 
+# ファイルパス作成用のメソッド。
 class String
   def /(other)
     File.join(self, other)
@@ -34,6 +38,7 @@ end
 
 require_relative 'post_builder'
 
+# 日付を2ちゃんねる形式の文字列に変換する。
 class Time
   def to_nichan
     Genkai::PostBuilder.format_date(self)

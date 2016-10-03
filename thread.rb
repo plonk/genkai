@@ -1,8 +1,10 @@
+# frozen_string_literal: true
 require_relative 'extensions'
 require_relative 'post'
 require_relative 'atomic_write_file'
 
 module Genkai
+  # DATファイルを操作するクラス。
   class ThreadFile
     attr_reader :id, :posts, :path
 
@@ -10,9 +12,9 @@ module Genkai
       @path = path
       begin
         data = File.read(path, encoding: 'CP932').to_utf8
-        @posts = data.each_line.map { |line|
+        @posts = data.each_line.map do |line|
           Post.from_line(line)
-        }
+        end
       rescue Errno::ENOENT
         @posts = []
       end

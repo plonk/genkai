@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'fileutils'
 require_relative 'atomic_write_file'
 
@@ -15,4 +16,3 @@ raise unless `cat test.txt` == 'fuga'
 FileUtils.rm_f 'test.txt'
 
 puts 'all tests passed'
-
