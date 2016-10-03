@@ -217,7 +217,6 @@ module Genkai
     end
 
     patch '/admin/:board' do
-      sleep 10
       convert_params_to_utf8!
 
       params.select { |key, _| key =~ /^settings_/ }
