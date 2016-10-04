@@ -317,7 +317,7 @@ module Genkai
       thread.save
 
       @head = meta_refresh_tag(1, "/test/read.cgi/#{@board.id}/#{thread.id}")
-      @title = '書き込みました'
+      @title = '書きこみました。'
       content_type HTML_SJIS
       sjis erb :posted
     end
