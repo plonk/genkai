@@ -22,6 +22,7 @@ module Genkai
     use Rack::MethodOverride
 
     configure do
+      enable :lock
       mime_type :dat, PLAIN_SJIS
     end
 
@@ -60,7 +61,7 @@ module Genkai
 
     get '/' do
       @boards = Dir.glob('public/*/SETTING.TXT').map do |path|
-        ImmutableBoard.new(File.dirname(path))
+        Board.new(File.dirname(path))
       end
       @title = @site_settings['SITE_NAME']
 
@@ -84,21 +85,15 @@ module Genkai
     before '/:board/*' do |board, _rest|
       next if board == 'test' || board == 'admin'
 
-      @board = ImmutableBoard.new(board_path(board))
+      @board = Board.new(board_path(board))
     end
 
     before '/admin/:board/?*' do |board, _rest|
-      # get メソッドの時は Immutable でいいか。
-      @board = case request.request_method
-               when 'GET'
-                 ImmutableBoard.new(board_path(board))
-               else
-                 MutableBoard.new(board_path(board))
-               end
+      @board = Board.new(board_path(board))
     end
 
     before '/test/read.cgi/:board/:sure/?*' do |board, sure, _rest|
-      @board = ImmutableBoard.new(board_path(board))
+      @board = Board.new(board_path(board))
       @thread = @board.threads.find { |th| th.id == sure }
       halt 404, "そんなスレないです。(#{sure})" unless @thread
     end
@@ -322,7 +317,7 @@ module Genkai
 
     before '/test/bbs.cgi' do
       check_non_blank!('bbs')
-      @board = MutableBoard.new(board_path(params['bbs']))
+      @board = Board.new(board_path(params['bbs']))
     end
 
     post '/test/bbs.cgi' do
@@ -341,12 +336,6 @@ module Genkai
     set :show_exceptions, :after_handler
     error Board::NotFoundError do |e|
       halt 404, "そんな板ないです。(#{e.message})"
-    end
-
-    # 例外が起ころうが、ここのコードは実行される。
-    after do
-      # 板のロックを解除する。
-      @board.close if @board
     end
   end
 end
