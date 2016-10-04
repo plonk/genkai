@@ -43,11 +43,4 @@
     <input form="delete_form" class="btn btn-warning btn-block" type="submit" value="選択した投稿を削除">
   </div>
 
-  <form action="/admin/<%= @board.id %>/<%= @thread.id %>" method="POST">
-    <input type="hidden" name="_method" value="DELETE">
-    <div class="form-group">
-      <input class="btn btn-danger btn-block" type="submit" value="スレッドごと削除">
-    </div>
-  </form>
-
 </div>

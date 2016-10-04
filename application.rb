@@ -172,7 +172,7 @@ module Genkai
     # レスの削除。
     post '/admin/:board/:sure/delete-posts' do |_board, sure|
       @thread = @board.threads.find { |t| t.id == sure }
-      raise 'no such thread' unless @thread
+      raise "no such thread (#{sure})" unless @thread
 
       nposts = @thread.posts.size
 
@@ -191,12 +191,19 @@ module Genkai
       begin
         @board.delete_thread(sure.to_i)
       rescue Errno::ENOENT
-        halt 404, 'no such thread'
+        halt 404, "no such thread (#{sure})"
       rescue => e
         halt 500, e.message
       end
 
       redirect to("/admin/#{board}/threads")
+    end
+
+    post "/admin/:board/delete-threads" do |board|
+      params['threads'].each do |thread_id|
+        @board.delete_thread(thread_id)
+      end
+      redirect back
     end
 
     get '/admin/:board/' do |board|
