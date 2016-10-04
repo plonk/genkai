@@ -1,11 +1,16 @@
 <div class="container">
 
-<h1><%= @title %></h1>
+  <h1><%= @title %></h1>
 
-<div class="list-group">
-<% @boards.each do |board| %>
-  <a class="list-group-item"href="/<%= board.id %>/"><%= board.title %></a>
-<% end %>
-</div>
+  <div class="list-group">
+    <% @boards.each do |board| %>
+      <a class="list-group-item"href="/<%= board.id %>/"><%= board.title %></a>
+    <% end %>
+  </div>
+
+  <a href="/admin/_/" class="btn btn-default btn-xs" style="float: right">
+    <span class="glyphicon glyphicon-ban-circle"></span>
+    管理
+  </a>
 
 </div>

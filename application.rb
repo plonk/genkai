@@ -59,17 +59,46 @@ module Genkai
       @client.remote_addr = env['REMOTE_ADDR']
     end
 
-    get '/' do
-      @boards = Dir.glob('public/*/SETTING.TXT').map do |path|
+    def get_all_boards
+      Dir.glob('public/*/SETTING.TXT').map do |path|
         Board.new(File.dirname(path))
       end
+    end
+
+    get '/' do
+      @boards = get_all_boards
       @title = @site_settings['SITE_NAME']
 
       content_type HTML_SJIS
       sjis erb :index
     end
 
+    get '/admin/_/' do
+      redirect to '/admin/_/boards'
+    end
+
+    get '/admin/_/boards' do
+      @boards = get_all_boards
+      content_type HTML_SJIS
+      sjis erb :admin_boards
+    end
+
+    get '/admin/_/settings' do
+      content_type HTML_SJIS
+      sjis erb :admin_server_settings
+    end
+
+    patch '/admin/_/settings' do
+      convert_params_to_utf8!
+      check_non_blank!('SITE_NAME')
+
+      @site_settings['SITE_NAME'] = params['SITE_NAME']
+      @site_settings.save
+      redirect back
+    end
+
     get '/:board' do |board|
+      next if board == 'test' || board == 'admin'
       redirect to("/#{board}/")
     end
 
@@ -82,13 +111,14 @@ module Genkai
       sjis erb :ita_top
     end
 
-    before '/:board/*' do |board, _rest|
+    before %r{^/([A-Za-z0-9]+)/} do |board|
       next if board == 'test' || board == 'admin'
 
       @board = Board.new(board_path(board))
     end
 
-    before '/admin/:board/?*' do |board, _rest|
+    # before '/admin/:board/?*' do |board, _rest|
+    before %r{^/admin/([A-Za-z0-9]+)/?} do |board|
       @board = Board.new(board_path(board))
     end
 

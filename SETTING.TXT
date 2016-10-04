@@ -1,1 +1,2 @@
 SITE_NAME=ŒÀŠEŽI
+BBS_TITLE=
