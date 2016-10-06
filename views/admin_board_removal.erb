@@ -1,0 +1,13 @@
+<ol class="breadcrumb">
+  <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a></li>
+  <li><a href="/<%= @board.id %>/"><%= h @board.title %></a> (設定)</li>
+</ol>
+
+<div class="container">
+  <%= erb :admin_board_tabs, locals: { index: 2 } %>
+
+  <form action="/admin/boards/<%= @board.id %>" method="POST">
+    <input type="hidden" name="_method" value="DELETE">
+    <input type="submit" value="削除" class="btn btn-danger btn-block">
+  </form>
+</div>

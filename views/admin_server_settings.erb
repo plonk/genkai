@@ -1,0 +1,19 @@
+<ol class="breadcrumb">
+  <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a> (設定)</li>
+</ol>
+
+<div class="container">
+  <%= erb :admin_server_tabs, locals: { index: 0 } %>
+
+  <form action="/admin/settings" method="POST">
+    <input type="hidden" name="_method" value="PATCH">
+
+    <div class="form-group">
+      <label>名前</label>
+      <input class="form-control" name="SITE_NAME" type="text" value="<%= h @site_settings['SITE_NAME'] %>">
+    </div>
+
+    <input class="btn btn-primary btn-block" type="submit" value="保存">
+  </form>
+  
+</div>

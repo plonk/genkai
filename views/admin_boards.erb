@@ -1,0 +1,33 @@
+<ol class="breadcrumb">
+  <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a> (設定)</li>
+</ol>
+
+<div class="container">
+  <%= erb :admin_server_tabs, locals: { index: 1 } %>
+
+  <div class="form-group">
+    <button class="btn btn-primary btn-block" data-toggle="modal" data-target="#create_board_dialog">作成...</button>
+  </div>
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4>板</h4>
+    </div>
+    <div class="list-group">
+      <% @boards.each do |board| %>
+        <a class="list-group-item" href="/admin/boards/<%= board.id %>"><%= board.title %></a>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="modal fade" id="create_board_dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <%= erb :board_create_form %>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+

@@ -1,0 +1,33 @@
+before
+
+  get    '/' 鯖トップ
+
+  get    '/admin/'
+
+  before %r{^/admin/boards/([A-Za-z0-9]+)/?}
+    get    '/admin/boards'
+    get    '/admin/boards/:board/threads'
+    get    '/admin/boards/:board/:sure'
+    post   '/admin/boards/:board/:sure/delete-posts'
+    delete '/admin/boards/:board/:sure'
+    post   '/admin/boards/:board/delete-threads'
+    get    '/admin/boards/:board/'
+    get    '/admin/boards/:board'
+    patch  '/admin/boards/:board'
+
+  get    '/admin/settings'
+  patch  '/admin/settings'
+
+ 
+  before '/test/bbs.cgi'
+    post   '/test/bbs.cgi'
+  
+  before '/test/read.cgi/:board/:sure/?*'
+    get    '/test/read.cgi/:board/:sure/:cmd'
+    get    '/test/read.cgi/:board/:sure'
+  
+  get    '/:board'
+
+  before %r{^/([A-Za-z0-9]+)/}
+    get    '/:board/'
+    get    '/:board/subject.txt'

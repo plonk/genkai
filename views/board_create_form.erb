@@ -1,0 +1,28 @@
+<div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal">
+    <span>×</span>
+  </button>
+  <h4 class="modal-title">板作成</h4>
+</div>
+<form action="/admin/boards" method="POST">
+  <input type="hidden" name="_method" value="PUT">
+  <div class="modal-body">
+    <div class="form-group">
+      <label>ID</label>
+      <input class="form-control" type="text" name="id">
+    </div>
+    <div class="form-group">
+      <label>パスワード</label>
+      <input class="form-control" type="text" name="password">
+    </div>
+    <div class="form-group">
+      <label>タイトル</label>
+      <input class="form-control" type="text" name="title">
+    </div>
+  </div>
+  <div class="modal-footer">
+    <div class="form-group">
+      <input class="btn btn-default" type="submit" name="submit" value="作成">
+    </div>
+  </div>
+</form>

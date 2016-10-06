@@ -1,0 +1,14 @@
+<% active = [] %>
+<% active[index] = 'class="active"' %>
+
+<ul class="nav nav-pills nav-justified" style="margin-bottom: 20px">
+  <li role="presentation" <%=active[0]%>>
+    <a href="/admin/settings">サイトの設定</a>
+  </li>
+  <li role="presentation" <%=active[1]%>>
+    <a href="/admin/boards">板の管理</a>
+  </li>
+  <li role="presentation" <%=active[2]%>>
+    <a href="/admin/passwords">パスワード</a>
+  </li>
+</ul>
