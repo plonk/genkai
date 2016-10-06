@@ -1,2 +1,4 @@
 SITE_NAME=ŒÀŠEŽI
-BBS_TITLE=
+MASTER_PASSWORD=fuga
+PASSWORD_shuuraku=1234
+PASSWORD_fuga=fuga

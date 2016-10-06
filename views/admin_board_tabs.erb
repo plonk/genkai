@@ -1,7 +1,8 @@
-<% active = [""] * 2 %>
+<% active = [] %>
 <% active[index] = 'class="active"' %>
 
 <ul class="nav nav-pills nav-justified" style="margin-bottom: 20px">
-  <li role="presentation" <%=active[0]%>><a href="/admin/<%= h @board.id %>">板の設定</a></li>
-  <li role="presentation" <%=active[1]%>><a href="/admin/<%= h @board.id %>/threads">スレッド管理</a></li>
+  <li role="presentation" <%=active[0]%>><a href="/admin/boards/<%= h @board.id %>">板の設定</a></li>
+  <li role="presentation" <%=active[1]%>><a href="/admin/boards/<%= h @board.id %>/threads">スレッド管理</a></li>
+  <li role="presentation" <%=active[2]%>><a href="/admin/boards/<%= h @board.id %>/removal">板の削除</a></li>
 </ul>

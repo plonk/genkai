@@ -34,6 +34,10 @@ class Object
     else false
     end
   end
+
+  def true?
+    self ? true : false
+  end
 end
 
 require_relative 'post_builder'

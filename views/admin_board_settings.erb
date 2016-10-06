@@ -6,7 +6,7 @@
 <div class="container">
   <%= erb :admin_board_tabs, locals: { index: 0 } %>
 
-  <form action="/admin/<%= @board.id %>" method="POST">
+  <form action="/admin/boards/<%= @board.id %>" method="POST">
     <input type="hidden" name="_method" value="PATCH">
 
     <div class="form-group">

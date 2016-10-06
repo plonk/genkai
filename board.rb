@@ -2,10 +2,34 @@
 require_relative 'settings'
 require_relative 'thread'
 require_relative 'string_helpers'
+require_relative 'extensions'
+
+require 'fileutils'
 
 module Genkai
   # 板を表わすクラス。
   class Board
+    class << self
+      def create(directory_path, title)
+        Dir.mkdir(directory_path)
+        Dir.mkdir(directory_path / 'dat')
+        File.open(directory_path / 'SETTING.TXT', 'w', encoding: 'CP932') do |f|
+          f.write("BBS_TITLE=#{title}\n")
+        end
+        Board.new(directory_path)
+      end
+
+      def remove(directory_path)
+        FileUtils.rm_rf directory_path
+      end
+
+      # 1〜30文字の英小文字アラビア数字からなる。
+      def valid_id?(string)
+        string != 'admin' && string != 'test' &&
+        (string =~ /\A [a-z0-9]{1,30} \z/x).true?
+      end
+    end
+
     include StringHelpers
 
     attr_reader :settings

@@ -2,7 +2,7 @@
 
 <ol class="breadcrumb">
   <li>設定</li>
-  <li><a href="/admin/<%= h @board.id %>/"><%= h @board.title %></a></li>
+  <li><a href="/admin/boards/<%= h @board.id %>/"><%= h @board.title %></a></li>
   <li class="active"><%= h @thread.subject %></li>
 </ol>
 
@@ -12,7 +12,7 @@
     <span class="badge"><%= @thread.posts.size %></span>
   </h1>
 
-  <form id="delete_form" action="/admin/<%= @board.id %>/<%= @thread.id %>/delete-posts" method="POST">
+  <form id="delete_form" action="/admin/boards/<%= @board.id %>/<%= @thread.id %>/delete-posts" method="POST">
   </form>
 
   <table class="table">
@@ -40,7 +40,7 @@
   </table>
 
   <div class="form-group">
-    <input form="delete_form" class="btn btn-warning btn-block" type="submit" value="選択した投稿を削除">
+    <input form="delete_form" class="btn btn-warning btn-block" type="submit" value="投稿を削除">
   </div>
 
 </div>
