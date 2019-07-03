@@ -6,7 +6,7 @@ module StringHelpers
   UNESCAPE_TABLE = ESCAPE_TABLE.invert.freeze
 
   def escape_field(str)
-    str.gsub(/[<>&]/) { |char| ESCAPE_TABLE[char] }
+    str.gsub(/<|>|&(?!#\d{0,7};)/) { |char| ESCAPE_TABLE[char] }
   end
   module_function :escape_field
 
