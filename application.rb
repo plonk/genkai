@@ -23,6 +23,7 @@ module Genkai
     use Rack::MethodOverride
 
     configure do
+      enable :static
       enable :lock
       mime_type :dat, PLAIN_SJIS
     end
@@ -58,17 +59,17 @@ module Genkai
       end
 
       def get_all_boards
-        Dir.glob('public/*/SETTING.TXT').map do |path|
+        Dir.glob('boards/*/SETTING.TXT').map do |path|
           Board.new(File.dirname(path))
         end
       end
 
       def dat_path(board, thread_id)
-        File.join('public', board, 'dat', "#{thread_id}.dat")
+        File.join(board_path(board), 'dat', "#{thread_id}.dat")
       end
 
       def board_path(board)
-        File.join('public', board)
+        File.join('boards', board)
       end
 
       def meta_refresh_tag(seconds, url)
@@ -143,7 +144,7 @@ module Genkai
       halt 400, 'invalid id' unless Board.valid_id?(params['id'])
       halt 400, 'invalid password' unless AuthenticationInformation.valid_password?(params['password'])
 
-      @board = Board.create('public' / params['id'], params['title'])
+      @board = Board.create('boards' / params['id'], params['title'])
       @site_settings["PASSWORD_#{params['id']}"] = params['password']
       @site_settings.save
 
@@ -151,7 +152,7 @@ module Genkai
       redirect back
     end
 
-    before %r{^/admin/boards/([A-Za-z0-9]+)/?} do |board|
+    before '/admin/boards/:board/?*' do |board, thread|
       @board = Board.new(board_path(board))
     end
 
@@ -169,7 +170,7 @@ module Genkai
 
     delete '/admin/boards/:board' do |board|
       # なんかやばい。
-      path = 'public' / board
+      path = 'boards' / board
       halt 400, 'directory not found' unless File.directory?(path)
       halt 400, 'not a board directory' unless File.exist?(path / 'SETTING.TXT') && File.directory?(path / 'dat')
       Board.remove(path)
@@ -183,7 +184,7 @@ module Genkai
 
     # スレの編集。削除するレスの選択。
     get '/admin/boards/:board/:sure' do |board, sure|
-      @thread = ThreadFile.new File.join('public', board, 'dat', "#{sure}.dat")
+      @thread = ThreadFile.new File.join(board_path(board), 'dat', "#{sure}.dat")
       @posts = NumberedElement.to_numbered_elements @thread.posts
 
       content_type HTML_SJIS
@@ -459,19 +460,14 @@ module Genkai
 
     # ------- 板ディレクトリ ----------
 
-    before %r{^/([A-Za-z0-9]+)/} do |board|
-      next if board == 'test' || board == 'admin'
-
-      @board = Board.new(board_path(board))
-    end
-
     get '/:board' do |board|
       next if board == 'test' || board == 'admin'
       redirect to("/#{board}/")
     end
 
     # 板トップ
-    get '/:board/' do
+    get '/:board/' do |board|
+      @board = Board.new(board_path(board))
       @threads = @board.threads.sort_by(&:mtime).reverse
       @title = @board.title
 
@@ -486,6 +482,69 @@ module Genkai
       sjis renderer.render.to_sjis
     end
 
+    get '/:board/SETTING.TXT' do |board|
+      headers["Content-Type"] = PLAIN_SJIS
+      send_file(board_path(board) / "SETTING.TXT")
+    end
+
+    get '/:board/1000.txt' do |board|
+      headers["Content-Type"] = PLAIN_SJIS
+      send_file(board_path(board) / "1000.txt")
+    end
+
+    get '/:board/head.txt' do |board|
+      headers["Content-Type"] = PLAIN_SJIS
+      send_file(board_path(board) / "head.txt")
+    end
+
+    get '/:board/dat/:thread.dat' do |board, thread|
+      error 400, 'invalid thread id' unless thread =~ /\A\d+\z/
+      headers["Accept-Ranges"] = "bytes"
+
+      if false # env["HTTP_RANGE"] =~ /\Abytes=(\d+)-(\d+)?\z/
+        lo = $1.to_i
+        hi = nil
+        if $2
+          hi = $2.to_i + 1
+        end
+
+        path = dat_path(board, thread)
+        begin
+          # ranged request
+          File.open(path, "r", encoding: "ASCII-8BIT") do |f|
+            f.seek(0, :END)
+            size = f.pos
+            if lo < size
+              hi ||= size
+              unless lo < hi
+                error 400, "bad range"
+              end
+              f.seek(lo, :SET)
+              buf = f.read(hi - lo)
+              if buf.nil? || buf.size != hi - lo
+                fail "read error"
+              end
+              return [206, # Partial Content
+                      { "Content-Range" => "bytes #{lo}-#{hi-1}/#{size}",
+                        "Content-Length" => buf.size.to_s },
+                      buf]
+            # elsif lo == size
+            #   raise WaitFileChange
+            else
+              return [416, # Requested Range Not Satisfiable
+                      {},
+                      ""]
+            end
+          end
+        # rescue WaitFileChange
+        #   system("inotifywait -q -e DELETE_SELF -t 3600 #{path}")
+        #   retry
+        end
+      else
+        send_file(dat_path(board, thread))
+      end
+    end
+
     # ------ エラー処理 -------
 
     set :show_exceptions, :after_handler
@@ -493,4 +552,8 @@ module Genkai
       halt 404, "そんな板ないです。(#{e.message})"
     end
   end
+
+  class WaitFileChange < Exception
+  end
+
 end

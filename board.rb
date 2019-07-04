@@ -103,7 +103,7 @@ module Genkai
 
     def create_thread
       unix_time = Time.now.to_i
-      dat_path = File.join('public', id, 'dat', "#{unix_time}.dat")
+      dat_path = File.join('boards', id, 'dat', "#{unix_time}.dat")
 
       raise ThreadCreateError, 'thread already exists' if File.exist? dat_path
       ThreadFile.new(dat_path)
