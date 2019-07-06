@@ -475,7 +475,8 @@ module Genkai
       sjis erb :ita_top
     end
 
-    get '/:board/subject.txt' do
+    get '/:board/subject.txt' do |board|
+      @board = Board.new(board_path(board))
       renderer = ThreadListRenderer.new(@board.threads)
 
       content_type PLAIN_SJIS
