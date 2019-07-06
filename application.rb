@@ -501,7 +501,7 @@ module Genkai
       error 400, 'invalid thread id' unless thread =~ /\A\d+\z/
       headers["Accept-Ranges"] = "bytes"
 
-      if false # env["HTTP_RANGE"] =~ /\Abytes=(\d+)-(\d+)?\z/
+      if env["HTTP_RANGE"] =~ /\Abytes=(\d+)-(\d+)?\z/
         lo = $1.to_i
         hi = nil
         if $2
@@ -512,8 +512,10 @@ module Genkai
         begin
           # ranged request
           File.open(path, "r", encoding: "ASCII-8BIT") do |f|
+            # dat ファイルのサイズを得る。
             f.seek(0, :END)
             size = f.pos
+
             if lo < size
               hi ||= size
               unless lo < hi
