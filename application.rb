@@ -92,7 +92,7 @@ module Genkai
     before do
       @site_settings = SettingsFile.new('SETTING.TXT')
       @client = OpenStruct.new
-      @client.remote_addr = env['REMOTE_ADDR']
+      @client.remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
     end
 
     # -------- 鯖トップ -------
