@@ -2,6 +2,15 @@ require 'sinatra/base'
 require 'webrick'
 require_relative 'genkai'
 
+# Reason phrase のあとに空白が入るバグをモンキーパッチする。
+module WEBrick
+  class HTTPResponse
+    def status_line
+      "HTTP/#@http_version #@status #@reason_phrase#{CRLF}"
+    end
+  end
+end
+
 app = Genkai::Application.new
 srv = WEBrick::HTTPServer.new({ :DocumentRoot => './',
                                 :BindAddress => '0.0.0.0',
