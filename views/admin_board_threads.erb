@@ -12,7 +12,7 @@
         <li class="list-group-item">
           <input type="checkbox" class="form-control" name="threads[]" value="<%= thread.id %>">
           <a href="/admin/boards/<%= @board.id %>/<%= thread.id %>">
-            <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.posts.size %></span>
+            <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.size %></span>
           </a>
         </li>
       <% end %>

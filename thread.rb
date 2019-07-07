@@ -13,6 +13,20 @@ module Genkai
       @id = path.split('/')[-1].gsub('.dat', '')
     end
 
+    def size
+      if @posts
+        @posts.size
+      else
+        begin
+          File.open(path, encoding: 'CP932') do |f|
+            f.each_line.count
+          end
+        rescue Errno::ENOENT
+          posts.size
+        end
+      end
+    end
+
     def posts
       unless @posts
         @posts = []

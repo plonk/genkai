@@ -9,7 +9,7 @@
 <div class="container">
   <h1>
     <a href="/test/read.cgi/<%= @board.id %>/<%= @thread.id %>"><%= h @thread.subject %></a>
-    <span class="badge"><%= @thread.posts.size %></span>
+    <span class="badge"><%= @thread.size %></span>
   </h1>
 
   <div class="form-group">
