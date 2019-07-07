@@ -502,6 +502,7 @@ module Genkai
       error 400, 'invalid thread id' unless thread =~ /\A\d+\z/
       headers["Accept-Ranges"] = "bytes"
       long_polling = params['long_polling'] == "1"
+      start = Time.now
 
       if env["HTTP_RANGE"] =~ /\Abytes=(\d+)-(\d+)?\z/
         lo = $1.to_i
@@ -533,7 +534,7 @@ module Genkai
                         "Content-Length" => buf.size.to_s },
                       buf]
             elsif lo == size
-              if long_polling
+              if long_polling && Time.now - start < 130
                 raise WaitFileChange
               else
                 return [416, {}, ""]
@@ -544,7 +545,7 @@ module Genkai
             end
           end
         rescue WaitFileChange
-          system("inotifywait -q -e DELETE_SELF -t 3600 #{path}")
+          system("inotifywait -q -e DELETE_SELF -t 1 #{path}")
           retry
         end
       else
