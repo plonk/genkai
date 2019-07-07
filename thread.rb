@@ -44,7 +44,17 @@ module Genkai
     end
 
     def subject
-      posts[0]&.subject
+      res = nil
+      begin
+        File.open(path, encoding: 'CP932') do |f|
+          line = f.gets
+          if line
+            res = Post.from_line(line.to_utf8).subject
+          end
+        end
+      rescue
+      end
+      res
     end
 
     def mtime
