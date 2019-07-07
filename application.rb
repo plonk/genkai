@@ -157,7 +157,7 @@ module Genkai
     end
 
     get '/admin/boards/:board/threads' do
-      @threads = @board.threads
+      @threads = @board.get_all_threads
 
       content_type HTML_SJIS
       sjis erb :admin_board_threads
@@ -193,7 +193,7 @@ module Genkai
 
     # レスの削除。
     post '/admin/boards/:board/:sure/delete-posts' do |_board, sure|
-      @thread = @board.threads.find { |t| t.id == sure }
+      @thread = @board.find_thread(sure)
       raise "no such thread (#{sure})" unless @thread
 
       nposts = @thread.posts.size
@@ -410,7 +410,7 @@ module Genkai
 
     before '/test/read.cgi/:board/:sure/?*' do |board, sure, _rest|
       @board = Board.new(board_path(board))
-      @thread = @board.threads.find { |th| th.id == sure }
+      @thread = @board.find_thread(sure)
       halt 404, "そんなスレないです。(#{sure})" unless @thread
     end
 
@@ -461,14 +461,14 @@ module Genkai
     # ------- 板ディレクトリ ----------
 
     get '/:board' do |board|
-      next if board == 'test' || board == 'admin'
+      next unless Board.valid_id?(board)
       redirect to("/#{board}/")
     end
 
     # 板トップ
     get '/:board/' do |board|
       @board = Board.new(board_path(board))
-      @threads = @board.threads.sort_by(&:mtime).reverse
+      @threads = @board.get_all_threads.sort_by(&:mtime).reverse
       @title = @board.title
 
       content_type HTML_SJIS
@@ -477,7 +477,7 @@ module Genkai
 
     get '/:board/subject.txt' do |board|
       @board = Board.new(board_path(board))
-      renderer = ThreadListRenderer.new(@board.threads)
+      renderer = ThreadListRenderer.new(@board.get_all_threads)
 
       content_type PLAIN_SJIS
       sjis renderer.render.to_sjis

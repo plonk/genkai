@@ -48,14 +48,29 @@ module Genkai
       @settings = SettingsFile.new(setting_path)
     end
 
-    def threads
+    def get_all_threads
       pat = File.join(@path, 'dat', '*.dat')
       Dir.glob(pat).map { |path| ThreadFile.new(path) }
     end
 
+    def dat_path(id)
+      File.join(@path, 'dat', "#{id}.dat")
+    end
+
+    def find_thread(id)
+      path = dat_path(id)
+
+      # XXX: レースがあるので正しくないが、ThreadFile.new がスレッドが
+      # 存在しなくてもエラーにしないのでこうしている。
+      if File.exist?(path)
+        ThreadFile.new(path)
+      else
+        nil
+      end
+    end
+
     def delete_thread(id)
-      path = File.join(@path, 'dat', "#{id}.dat")
-      File.unlink(path)
+      File.unlink(dat_path(id))
     end
 
     def id
@@ -103,10 +118,10 @@ module Genkai
 
     def create_thread
       unix_time = Time.now.to_i
-      dat_path = File.join('boards', id, 'dat', "#{unix_time}.dat")
+      path = dat_path(unix_time)
 
-      raise ThreadCreateError, 'thread already exists' if File.exist? dat_path
-      ThreadFile.new(dat_path)
+      raise ThreadCreateError, 'thread already exists' if File.exist? path
+      ThreadFile.new(path)
     end
 
     # ID表示に関するポリシー。
