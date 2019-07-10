@@ -23,7 +23,7 @@ module Genkai
 
     configure do
       enable :static
-      enable :lock
+      #enable :lock
       mime_type :dat, PLAIN_SJIS
     end
 
