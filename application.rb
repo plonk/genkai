@@ -88,8 +88,10 @@ module Genkai
       end
     end
 
+    @@site_settings = SettingsFile.new('SETTING.TXT')
+
     before do
-      @site_settings = SettingsFile.new('SETTING.TXT')
+      @site_settings = @@site_settings
       @client = OpenStruct.new
       @client.remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
     end
