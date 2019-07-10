@@ -157,7 +157,7 @@ module Genkai
     end
 
     get '/admin/boards/:board/threads' do
-      @threads = @board.get_all_threads
+      @threads = @board.get_all_threads.sort_by(&:subject)
 
       content_type HTML_SJIS
       sjis erb :admin_board_threads
