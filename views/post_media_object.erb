@@ -1,23 +1,5 @@
-<script>
-if (typeof($cache) == "undefined")
-  $cache = {};
-</script>
 <div class="media">
   <div class="media-left">
-    <% if post.id %>
-    <script>
-      var hash = <%= post.id.inspect %>;
-      var data;
-      if (!$cache[hash]) {
-        $cache[hash] = new Identicon(hash, {size: 64}).toString()
-        data = $cache[hash];
-      }
-      data = $cache[hash];
-      document.write('<img width=64 height=64 src="data:image/png;base64,' + data + '" title="ID:' + hash + '">');
-    </script>
-    <% else %>
-    <div style="width: 64px; height: 64px; background-color: #f0f0f0; text-align: center; line-height: 64px"><span class="glyphicon glyphicon-user text-muted" style="font-size: 45px; vertical-align: middle"></span></div>
-    <% end %>
   </div>
   <div class="media-body">
     <h4 class="media-heading"><%= post.number %></h4>
