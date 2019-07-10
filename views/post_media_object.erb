@@ -13,6 +13,9 @@
         <a href="mailto:<%= h post.mail %>"><%= h post.name %></a>
     <% end %>
     <%= h post.date_proper %>
+    <% if post.id %>
+      ID:<%= h post.id %>
+    <% end %>
     </small>
   </div>
 </div>
