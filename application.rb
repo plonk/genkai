@@ -185,7 +185,9 @@ module Genkai
 
     # スレの編集。削除するレスの選択。
     get '/admin/boards/:board/:sure' do |board, sure|
-      @thread = ThreadFile.new File.join(board_path(board), 'dat', "#{sure}.dat")
+      @thread = @board.find_thread(sure)
+      halt(404, "no such thread (#{sure})") unless @thread
+
       @posts = @thread.posts
 
       content_type HTML_SJIS
@@ -195,12 +197,12 @@ module Genkai
     # レスの削除。
     post '/admin/boards/:board/:sure/delete-posts' do |_board, sure|
       @thread = @board.find_thread(sure)
-      raise "no such thread (#{sure})" unless @thread
+      halt(400, "no such thread (#{sure})") unless @thread
 
       nposts = @thread.posts.size
 
       params['post_numbers'].map(&:to_i).each do |res_no|
-        raise 'range error' unless res_no.between?(1, nposts)
+        halt(400, 'range error') unless res_no.between?(1, nposts)
 
         @thread.posts[res_no - 1] = @board.grave_stone
       end
@@ -441,7 +443,6 @@ module Genkai
         halt 400, 'わかりません。'
       end
 
-      # FIXME
       if require_first_post && @posts.first.number != 1
         # 1レス目が含まれていなかったら、先頭に追加する。
         @posts.unshift(all_posts.first)
