@@ -71,7 +71,7 @@ module Genkai
         File.join('boards', board)
       end
 
-      def meta_refresh_tag(seconds, url)
+      def refresh_meta_tag(seconds, url)
         "<meta http-equiv=\"refresh\" content=\"#{seconds}; url=#{url}\">"
       end
 
@@ -399,7 +399,7 @@ module Genkai
       thread.posts << post
       thread.save
 
-      @head = meta_refresh_tag(1, "/test/read.cgi/#{@board.id}/#{thread.id}")
+      @head = refresh_meta_tag(1, "/test/read.cgi/#{@board.id}/#{thread.id}")
       @title = '書きこみました。'
       content_type HTML_SJIS
       sjis erb :posted
@@ -421,7 +421,7 @@ module Genkai
       require_first_post = false
       case cmd
       when /^l(\d+)$/
-        @posts = all_posts.reverse[0, $1.to_i].reverse
+        @posts = all_posts.last(3)
         require_first_post = true
       when /^(\d+)-(\d+)$/
         @posts = all_posts[($1.to_i - 1)..($2.to_i - 1)]
@@ -430,7 +430,7 @@ module Genkai
         @posts = all_posts[($1.to_i - 1)..-1]
         require_first_post = true
       when /^-(\d+)$/
-        @posts = all_posts[0..($1.to_i - 1)]
+        @posts = all_posts.first($1.to_i)
         require_first_post = true
       when /^(\d+)$/
         @posts = [*all_posts[$1.to_i - 1]]
