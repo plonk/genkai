@@ -89,6 +89,7 @@ module Genkai
     end
 
     @@site_settings = SettingsFile.new('SETTING.TXT')
+    @@post_lock = Monitor.new
 
     before do
       @site_settings = @@site_settings
@@ -359,19 +360,23 @@ module Genkai
       convert_params_to_utf8!
       check_non_blank!('key', 'MESSAGE')
 
-      thread = ThreadFile.new(dat_path(params['bbs'], params['key']))
-      if thread.posts.size >= 1000
-        @title = 'ＥＲＲＯＲ！'
-        @reason = 'ＥＲＲＯＲ：スレッドストップです。'
-        content_type HTML_SJIS
-        return erb(:post_error).to_sjis!
-      end
+      @@post_lock.synchronize do
 
-      builder = PostBuilder.new(@board, thread, @client)
-      post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE'))
+        thread = ThreadFile.new(dat_path(params['bbs'], params['key']))
+        if thread.size >= 1000
+          @title = 'ＥＲＲＯＲ！'
+          @reason = 'ＥＲＲＯＲ：スレッドストップです。'
+          content_type HTML_SJIS
+          return erb(:post_error).to_sjis!
+        end
 
-      thread.posts << post
-      thread.save
+        builder = PostBuilder.new(@board, thread, @client)
+        post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE'))
+
+        thread.posts << post
+        thread.save
+
+      end # synchronize
 
       @head = "<meta http-equiv=\"refresh\" content=\"1; url=#{h back}\">"
       @title = '書きこみました'
