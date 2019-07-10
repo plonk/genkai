@@ -6,8 +6,6 @@ require_relative 'post_builder'
 require_relative 'thread_list_renderer'
 require_relative 'authentication_information'
 
-require 'ostruct'
-
 module Genkai
   # Genkaiアプリケーション。
   class Application < Sinatra::Base
@@ -93,8 +91,6 @@ module Genkai
 
     before do
       @site_settings = @@site_settings
-      @client = OpenStruct.new
-      @client.remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
     end
 
     # -------- 鯖トップ -------
@@ -370,7 +366,8 @@ module Genkai
           return erb(:post_error).to_sjis!
         end
 
-        builder = PostBuilder.new(@board, thread, @client)
+        remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
+        builder = PostBuilder.new(@board, thread, remote_addr)
         post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE'))
 
         thread.posts << post

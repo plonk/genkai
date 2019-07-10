@@ -22,17 +22,17 @@ module Genkai
       end
     end
 
-    def initialize(board, thread, client)
+    def initialize(board, thread, remote_addr)
       @board = board
       @thread = thread
-      @client = client
+      @id = Digest::MD5.base64digest(remote_addr)[0, 8]
     end
 
     def create_post(raw_name, raw_mail, raw_body, raw_title = '')
       raw_name = @board.default_name if raw_name.blank?
 
       date = PostBuilder.format_date(Time.now.localtime)
-      date = "#{date} ID:#{client_id}" if requires_id?(raw_mail)
+      date = "#{date} ID:#{@id}" if requires_id?(raw_mail)
 
       Post.new(escape_field(raw_name),
                escape_field(raw_mail),
@@ -40,10 +40,6 @@ module Genkai
 
                escape_body(raw_body),
                raw_title)
-    end
-
-    def client_id
-      Digest::MD5.base64digest(@client.remote_addr)[0, 8]
     end
 
     def requires_id?(mail)
