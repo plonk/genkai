@@ -10,6 +10,14 @@ class String
     encode('CP932')
   end
 
+  def to_utf8!
+    encode!('UTF-8')
+  end
+
+  def to_sjis!
+    encode!('CP932')
+  end
+
   def as_utf8
     dup.force_encoding('UTF-8')
   end

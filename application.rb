@@ -101,7 +101,7 @@ module Genkai
       @title = @site_settings['SITE_NAME']
 
       content_type HTML_SJIS
-      sjis erb :index
+      erb(:index).to_sjis!
     end
 
     # -------- admin ---------
@@ -132,7 +132,7 @@ module Genkai
     get '/admin/boards' do
       @boards = get_all_boards
       content_type HTML_SJIS
-      sjis erb :admin_boards
+      erb(:admin_boards).to_sjis!
     end
 
     # 板の作成
@@ -159,12 +159,12 @@ module Genkai
       @threads = @board.get_all_threads.sort_by(&:subject)
 
       content_type HTML_SJIS
-      sjis erb :admin_board_threads
+      erb(:admin_board_threads).to_sjis!
     end
 
     get '/admin/boards/:board/removal' do
       content_type HTML_SJIS
-      sjis erb :admin_board_removal
+      erb(:admin_board_removal).to_sjis!
     end
 
     delete '/admin/boards/:board' do |board|
@@ -187,7 +187,7 @@ module Genkai
       @posts = @thread.posts
 
       content_type HTML_SJIS
-      sjis erb :admin_timeline
+      erb(:admin_timeline).to_sjis!
     end
 
     # レスの削除。
@@ -238,7 +238,7 @@ module Genkai
       @title = "“#{@board.id}”の設定"
 
       content_type HTML_SJIS
-      sjis erb :admin_board_settings
+      erb(:admin_board_settings).to_sjis!
     end
 
     patch '/admin/boards/:board' do
@@ -258,12 +258,12 @@ module Genkai
       @title = "“#{@board.id}”の設定"
 
       content_type HTML_SJIS
-      sjis erb :admin_board_settings
+      erb(:admin_board_settings).to_sjis!
     end
 
     get '/admin/settings' do
       content_type HTML_SJIS
-      sjis erb :admin_server_settings
+      erb(:admin_server_settings).to_sjis!
     end
 
     patch '/admin/settings' do
@@ -290,7 +290,7 @@ module Genkai
     get '/admin/passwords' do
       @auth_infos = all_authentication_information
       content_type HTML_SJIS
-      sjis erb :admin_passwords
+      erb(:admin_passwords).to_sjis!
     end
 
     def params_to_authentication_information
@@ -360,7 +360,7 @@ module Genkai
         @title = 'ＥＲＲＯＲ！'
         @reason = 'ＥＲＲＯＲ：スレッドストップです。'
         content_type HTML_SJIS
-        return sjis erb :post_error
+        return erb(:post_error).to_sjis!
       end
 
       builder = PostBuilder.new(@board, thread, @client)
@@ -373,7 +373,7 @@ module Genkai
       @title = '書きこみました'
 
       content_type HTML_SJIS
-      sjis erb :posted
+      erb(:posted).to_sjis!
     end
 
     # パラメーター
@@ -402,7 +402,7 @@ module Genkai
       @head = refresh_meta_tag(1, "/test/read.cgi/#{@board.id}/#{thread.id}")
       @title = '書きこみました。'
       content_type HTML_SJIS
-      sjis erb :posted
+      erb(:posted).to_sjis!
     end
 
     # ---------- read.cgi -----------
@@ -446,7 +446,7 @@ module Genkai
       end
 
       content_type HTML_SJIS
-      sjis erb :timeline
+      erb(:timeline).to_sjis!
     end
 
     get '/test/read.cgi/:board/:sure' do |_, _|
@@ -454,7 +454,7 @@ module Genkai
       @title = @thread.subject
 
       content_type HTML_SJIS
-      sjis erb :timeline
+      erb(:timeline).to_sjis!
     end
 
     # ------- 板ディレクトリ ----------
@@ -471,7 +471,7 @@ module Genkai
       @title = @board.title
 
       content_type HTML_SJIS
-      sjis erb :ita_top
+      erb(:ita_top).to_sjis!
     end
 
     get '/:board/subject.txt' do |board|
