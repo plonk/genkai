@@ -32,8 +32,8 @@ module Genkai
         @posts = []
         begin
           File.open(path, encoding: 'CP932') do |f|
-            while line = f.gets
-              @posts << Post.from_line(line.to_utf8)
+            f.each_line.with_index(1) do |line, lineno|
+              @posts << Post.from_line(line.to_utf8, lineno)
             end
           end
         rescue Errno::ENOENT

@@ -3,7 +3,6 @@ require_relative 'settings'
 require_relative 'board'
 require_relative 'thread'
 require_relative 'post_builder'
-require_relative 'numbered_element'
 require_relative 'thread_list_renderer'
 require_relative 'authentication_information'
 
@@ -185,7 +184,7 @@ module Genkai
     # スレの編集。削除するレスの選択。
     get '/admin/boards/:board/:sure' do |board, sure|
       @thread = ThreadFile.new File.join(board_path(board), 'dat', "#{sure}.dat")
-      @posts = NumberedElement.to_numbered_elements @thread.posts
+      @posts = @thread.posts
 
       content_type HTML_SJIS
       sjis erb :admin_timeline
@@ -417,7 +416,7 @@ module Genkai
     get '/test/read.cgi/:board/:sure/:cmd' do |_, _, cmd|
       @title = @thread.subject
 
-      all_posts = NumberedElement.to_numbered_elements @thread.posts
+      all_posts = @thread.posts
 
       require_first_post = false
       case cmd
@@ -451,7 +450,7 @@ module Genkai
     end
 
     get '/test/read.cgi/:board/:sure' do |_, _|
-      @posts = NumberedElement.to_numbered_elements @thread.posts
+      @posts = @thread.posts
       @title = @thread.subject
 
       content_type HTML_SJIS
