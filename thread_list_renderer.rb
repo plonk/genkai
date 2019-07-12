@@ -11,7 +11,7 @@ module Genkai
 
     def render
       @threads.sort_by(&:mtime).reverse # いちばん最近更新されたものが先頭。
-           .map { |thread| "#{thread.id}.dat<>#{escape_field(thread.subject)} (#{thread.posts.size})\n" }
+           .map { |thread| "#{thread.id}.dat<>#{escape_field(thread.subject)} (#{thread.size})\n" }
            .join
     end
   end
