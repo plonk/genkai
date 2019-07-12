@@ -399,7 +399,8 @@ module Genkai
         halt 500, e.message
       end
 
-      builder = PostBuilder.new(@board, thread, @client)
+      remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
+      builder = PostBuilder.new(@board, thread, remote_addr)
       post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE', 'subject'))
 
       thread.posts << post
