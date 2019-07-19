@@ -455,7 +455,11 @@ module Genkai
       erb(:timeline).to_sjis!
     end
 
-    get '/test/read.cgi/:board/:sure' do |_, _|
+    get '/test/read.cgi/:board/:sure' do |board, sure|
+      redirect to("/test/read.cgi/#{board}/#{sure}/")
+    end
+
+    get '/test/read.cgi/:board/:sure/' do |_, _|
       @posts = @thread.posts
       @title = @thread.subject
 
