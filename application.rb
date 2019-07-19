@@ -451,6 +451,8 @@ module Genkai
         @posts.unshift(all_posts.first)
       end
 
+      @dat_size = @thread.bytesize
+
       content_type HTML_SJIS
       erb(:timeline).to_sjis!
     end
@@ -462,6 +464,7 @@ module Genkai
     get '/test/read.cgi/:board/:sure/' do |_, _|
       @posts = @thread.posts
       @title = @thread.subject
+      @dat_size = @thread.bytesize
 
       content_type HTML_SJIS
       erb(:timeline).to_sjis!
@@ -511,7 +514,12 @@ module Genkai
       error 400, 'invalid thread id' unless thread =~ /\A\d+\z/
       headers["Accept-Ranges"] = "bytes"
       long_polling = params['long_polling'] == "1"
+      html = params['html'] == '1'
       start = Time.now
+
+      if html
+        headers["Content-Type"] = 'text/html;charset=UTF-8'
+      end
 
       if env["HTTP_RANGE"] =~ /\Abytes=(\d+)-(\d+)?\z/
         lo = $1.to_i
@@ -523,7 +531,7 @@ module Genkai
         path = dat_path(board, thread)
         begin
           # ranged request
-          File.open(path, "r", encoding: "ASCII-8BIT") do |f|
+          File.open(path, "r") do |f|
             # dat ファイルのサイズを得る。
             f.seek(0, :END)
             size = f.pos
@@ -534,13 +542,24 @@ module Genkai
                 error 400, "bad range"
               end
               f.seek(lo, :SET)
-              buf = f.read(hi - lo)
-              if buf.nil? || buf.size != hi - lo
+              buf = f.read(hi - lo) # エンコーディングは ASCII-8BIT。
+              if buf.nil? || buf.bytesize != hi - lo
                 fail "read error"
+              end
+
+              if html
+                f.seek(0, :SET)
+                start_no = f.read(lo).count("\n") + 1
+
+                @posts = []
+                buf.as_sjis!.to_utf8!.each_line.with_index(start_no) do |line, lineno|
+                  @posts << Post.from_line(line, lineno)
+                end
+                buf = erb(:ajax_timeline, layout: false)
               end
               return [206, # Partial Content
                       { "Content-Range" => "bytes #{lo}-#{hi-1}/#{size}",
-                        "Content-Length" => buf.size.to_s },
+                        "Content-Length" => buf.bytesize.to_s },
                       buf]
             elsif lo == size
               if long_polling && Time.now - start < 130
@@ -558,7 +577,12 @@ module Genkai
           retry
         end
       else
-        send_file(dat_path(board, thread))
+        if html
+          @posts = ThreadFile.new(board, thread).posts
+          erb(:ajax_timeline, layout: false)
+        else
+          send_file(dat_path(board, thread))
+        end
       end
     end
 

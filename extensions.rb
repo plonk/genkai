@@ -25,6 +25,14 @@ class String
   def as_sjis
     dup.force_encoding('CP932')
   end
+
+  def as_utf8!
+    force_encoding('UTF-8')
+  end
+
+  def as_sjis!
+    force_encoding('CP932')
+  end
 end
 
 # ファイルパス作成用のメソッド。

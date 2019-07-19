@@ -27,6 +27,16 @@ module Genkai
       end
     end
 
+    def bytesize
+      if @bytesize
+        @bytesize
+      else
+        posts
+        fail 'logic error' unless @bytesize
+        @bytesize
+      end
+    end
+
     def posts
       unless @posts
         @posts = []
@@ -35,6 +45,7 @@ module Genkai
             f.each_line.with_index(1) do |line, lineno|
               @posts << Post.from_line(line.to_utf8, lineno)
             end
+            @bytesize = f.pos
           end
         rescue Errno::ENOENT
         end

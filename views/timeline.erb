@@ -22,11 +22,40 @@
   </div>
 
 
-  <div style="margin: 20px 0px 20px 0px">
+  <div id="timeline" style="margin: 20px 0px 20px 0px">
     <% @posts.each do |post| %>
       <%= erb :post_media_object, locals: { post: post } %>
     <% end %>
   </div>
+
+  <script>
+   var $dat_size = <%= @dat_size %>;
+   function getNewMessages() {
+       $.ajax("/<%= [@board.id, 'dat', @thread.id+'.dat'].join('/') %>?long_polling=1&amp;html=1",
+              {
+                  headers: { Range: "bytes=" + $dat_size + "-" },
+                  cache: false,
+                  dataType: 'html',
+                  success: function(data, textStatus, jqXHR){
+                      $('#timeline').html($('#timeline').html() + data);
+                      $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                      var size = jqXHR.getResponseHeader("Content-Range").split("/")[1];
+                      if (size) {
+                          $dat_size = size;
+                          getNewMessages();
+                      } else {
+                          console.error("failed to parse Content-Range header");
+                          console.log(jqXHR.getResponseHeader("Content-Range"));
+                      }
+                  },
+                  error: function(req, textStatus){
+                      console.error(textStatus);
+                      console.error(req.responseText);
+                  },
+              });
+   }
+   getNewMessages();
+  </script>
 
   <div class="form-group">
     <a class="btn btn-default btn-block" href="#top">
