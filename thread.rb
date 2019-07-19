@@ -42,8 +42,8 @@ module Genkai
         @posts = []
         begin
           File.open(path, encoding: 'CP932') do |f|
-            f.to_utf8.each_line.with_index(1) do |line, lineno|
-              @posts << Post.from_line(line, lineno)
+            f.each_line.with_index(1) do |line, lineno|
+              @posts << Post.from_line(line.to_utf8, lineno)
             end
             @bytesize = f.pos
           end
