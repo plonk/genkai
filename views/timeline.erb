@@ -31,6 +31,7 @@
   <script>
    var $dat_size = <%= @dat_size %>;
    function getNewMessages() {
+       //console.log("getNewMessages");
        $.ajax("/<%= [@board.id, 'dat', @thread.id+'.dat'].join('/') %>?long_polling=1&html=1",
               {
                   headers: { Range: "bytes=" + $dat_size + "-" },
@@ -49,9 +50,15 @@
                       }
                   },
                   error: function(req, textStatus){
-                      console.error(textStatus);
-                      console.error(req.responseText);
+                      if (textStatus == "timeout") {
+                          //console.log("timeout");
+                          setTimeout(getNewMessages, 0);
+                      } else {
+                          console.log(textStatus);
+                          setTimeout(getNewMessages, 30*1000);
+                      }
                   },
+                  timeout: 120*1000,
               });
    }
    getNewMessages();
