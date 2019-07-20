@@ -32,7 +32,7 @@
    var $dat_size = <%= @dat_size %>;
    function getNewMessages() {
        //console.log("getNewMessages");
-       $.ajax("/<%= [@board.id, 'dat', @thread.id+'.dat'].join('/') %>?long_polling=1&html=1",
+       $.ajax("/<%= [@board.id, 'dat', @thread.id+'.dat'].join('/') %>?long_polling=1&format=html",
               {
                   headers: { Range: "bytes=" + $dat_size + "-" },
                   cache: false,

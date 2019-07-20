@@ -326,6 +326,16 @@ module Genkai
       redirect back
     end
 
+    # ------- nitecast.cgi --------
+
+    get '/test/nitecast.cgi/:board/:sure/' do |board, sure|
+      @board = Board.new(board_path(board))
+      @thread = @board.find_thread(sure)
+      halt 404, "そんなスレないです。(#{sure})" unless @thread
+      content_type HTML_SJIS
+      erb(:nitecast, layout: false).to_sjis!
+    end
+
     # ------- bbs.cgi --------
 
     before '/test/bbs.cgi' do
@@ -514,11 +524,15 @@ module Genkai
       error 400, 'invalid thread id' unless thread =~ /\A\d+\z/
       headers["Accept-Ranges"] = "bytes"
       long_polling = params['long_polling'] == "1"
-      html = params['html'] == '1'
+      format = params['format'] || "raw"
       start = Time.now
 
-      if html
+      halt 400, "format" unless %w[html json raw].include?(format)
+
+      if format == "html"
         headers["Content-Type"] = 'text/html;charset=UTF-8'
+      elsif format == "json"
+        headers["Content-Type"] = 'application/json;charset=UTF-8'
       end
 
       if env["HTTP_RANGE"] =~ /\Abytes=(\d+)-(\d+)?\z/
@@ -547,7 +561,7 @@ module Genkai
                 fail "read error"
               end
 
-              if html
+              if format == "html"
                 f.seek(0, :SET)
                 start_no = f.read(lo).count("\n") + 1
 
@@ -556,6 +570,12 @@ module Genkai
                   @posts << Post.from_line(line, lineno)
                 end
                 buf = erb(:ajax_timeline, layout: false)
+              elsif format == "json"
+                messages = []
+                buf.as_sjis!.to_utf8!.each_line do |line|
+                  messages << Post.from_line(line).body
+                end
+                buf = JSON.dump({ "messages" => messages, "dat_size" => size })
               end
               return [206, # Partial Content
                       { "Content-Range" => "bytes #{lo}-#{hi-1}/#{size}",
@@ -577,9 +597,16 @@ module Genkai
           retry
         end
       else
-        if html
+        if format == "html"
           @posts = ThreadFile.new(board, thread).posts
           erb(:ajax_timeline, layout: false)
+        elsif format == "json"
+          messages = []
+          thread = ThreadFile.new(board, thread)
+          thread.posts.each do |post|
+            messages << post.body
+          end
+          JSON.dump({ "messages" => messages, "dat_size" => thread.bytesize })
         else
           send_file(dat_path(board, thread))
         end
