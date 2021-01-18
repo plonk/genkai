@@ -11,10 +11,11 @@ module WEBrick
   end
 end
 
+Process.setproctitle("genkai")
 app = Genkai::Application.new
 srv = WEBrick::HTTPServer.new({ :DocumentRoot => './',
                                 :BindAddress => '0.0.0.0',
-                                :Port => 8080})
+                                :Port => 10000})
 srv.mount('/', Rack::Handler::WEBrick, app)
 trap("INT"){ srv.shutdown }
 srv.start
