@@ -2,88 +2,127 @@
 <html lang="ja">
   <head>
     <title>Nitecast</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
     <script src="/bower_components/jquery/dist/jquery.min.js"></script>
+    <style>
+      #message {
+          font-weight: bold; color: #ff8000; margin-top: 6px; font-size: 16px; padding-left: 2px;
+          text-shadow: 0px -1px 0px #000080,
+                       1px -1px 0px #000080,
+                       1px 0px 0px #000080,
+                       2px 0px 0px #000080,
+                       3px 0px 0px #000080,
+                       4px 0px 0px #000080,
+                       1px 1px 0px #000080,
+                       2px 1px 0px #000080,
+                       3px 1px 0px #000080,
+                       4px 1px 0px #000080,
+                       1px 2px 0px #000080,
+                       2px 2px 0px #000080,
+                       3px 2px 0px #000080,
+                       4px 2px 0px #000080,
+                       1px 3px 0px #000080,
+                       2px 3px 0px #000080,
+                       3px 3px 0px #000080,
+                       4px 3px 0px #000080,
+                       1px 1px 0px #000080,
+                       0px 1px 0px #000080,
+                       -1px 1px 0px #000080,
+                       -1px 0px 0px #000080,
+                       -1px -1px 0px #000080;
+      }
+    </style>
   </head>
   <body style="margin: 0">
-    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; "><span style="background-color: #c06060; color: #fff; padding-left: 1px">nitecast</spa><br><div id="message" style="font-weight: bold; color: #ff8000; margin-top: 6px; font-size: 16px; padding-left: 2px;
-text-shadow: 0px -1px 0px #000080,
-1px -1px 0px #000080,
-1px 0px 0px #000080,
-2px 0px 0px #000080,
-3px 0px 0px #000080,
-4px 0px 0px #000080,
-1px 1px 0px #000080,
-2px 1px 0px #000080,
-3px 1px 0px #000080,
-4px 1px 0px #000080,
-1px 2px 0px #000080,
-2px 2px 0px #000080,
-3px 2px 0px #000080,
-4px 2px 0px #000080,
-1px 3px 0px #000080,
-2px 3px 0px #000080,
-3px 3px 0px #000080,
-4px 3px 0px #000080,
-1px 1px 0px #000080,
-0px 1px 0px #000080,
--1px 1px 0px #000080,
--1px 0px 0px #000080,
--1px -1px 0px #000080;
-"></div></div>
+    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; "><span style="background-color: #c06060; color: #fff; padding-left: 1px">nitecast</span><br><div id="message"></div></div>
 
   <audio id=kiri preload=auto src="/kiri.wav"></audio>
+  <button id=unmuteBtn style="margin-top: 16px; margin-left: 16px">ミュート解除</button>
 
   <script>
-   var $dat_size = <%= @thread.bytesize %>;
-   var $queue = [];
-   function getNewMessages() {
-       console.log("getNewMessages");
-       $.ajax("/<%= [@board.id, 'dat', @thread.id + '.dat'].join('/') %>?long_polling=1&format=json",
-              {
-                  headers: { Range: "bytes=" + $dat_size + "-" },
-                  cache: false,
-                  dataType: 'json',
-                  success: function(data, textStatus, jqXHR){
-                      console.log(data.messages);
-                      $queue = $queue.concat(data.messages);
-                      setTimeout(startShowProcess, 0);
-                      $dat_size = data.dat_size;
-                      getNewMessages();
-                  },
-                  error: function(req, textStatus){
-                      if (textStatus == "timeout") {
-                          getNewMessages();
-                      } else {
-                          console.log(textStatus);
-                          setTimeout(getNewMessages, 30*1000);
-                      }
-                  },
-                  timeout: 120*1000,
-              });
-   }
-   var $showProcessRunning = false;
-   function startShowProcess() {
-       if ($showProcessRunning) return;
-       showProcess();
-   }
-   function showProcess() {
-       console.log("showProcess");
-       console.log([$showProcessRunning, $queue.length]);
-       $showProcessRunning = true;
-       if ($queue.length > 0) {
-           var message = $queue.shift();
-           $('#message').html(message);
-           new Audio("/kiri.wav").play();
-           setTimeout(function(){
-               $('#message').html('');
-               showProcess(true);
-           }, 5000 / ($queue.length+1));
-       } else {
-           $showProcessRunning = false;
-       }
-   }
+    var $dat_size = <%= @thread.bytesize %>;
+    var $queue = [];
+    function getNewMessages() {
+        console.log("getNewMessages");
+        $.ajax("/<%= [@board.id, 'dat', @thread.id + '.dat'].join('/') %>?long_polling=1&format=json",
+               {
+                   headers: { Range: "bytes=" + $dat_size + "-" },
+                   cache: false,
+                   dataType: 'json',
+                   success: function(data, textStatus, jqXHR){
+                       console.log(data.messages);
+                       $queue = $queue.concat(data.messages);
+                       setTimeout(startShowProcess, 0);
+                       $dat_size = data.dat_size;
+                       getNewMessages();
+                   },
+                   error: function(req, textStatus){
+                       if (textStatus == "timeout") {
+                           getNewMessages();
+                       } else {
+                           console.log(textStatus);
+                           setTimeout(getNewMessages, 30*1000);
+                       }
+                   },
+                   timeout: 120*1000,
+               });
+    }
+    var $showProcessRunning = false;
+    function startShowProcess() {
+        if ($showProcessRunning) return;
+        showProcess();
+    }
+    function showProcess() {
+        console.log("showProcess");
+        $showProcessRunning = true;
+        if ($queue.length > 0) {
+            var message = $queue.shift();
+            $('#message').html(message);
+            new Audio("/kiri.wav").play().catch(err => {
+                showUnmuteButton();
+            });
+            speakAques(message);
+            setTimeout(function(){
+                $('#message').html('');
+                showProcess(true);
+            }, 5000 / ($queue.length+1));
+        } else {
+            $showProcessRunning = false;
+        }
+    }
+    function speakAques(text) {
+        var req = new XMLHttpRequest();
+        var params = `text=${encodeURI(text)}&format=ogg`;
 
-   getNewMessages();
+        req.open("POST", "http://speech.pcgw.pgw.jp/v1/tts", true);
+        req.responseType = 'blob';
+        req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+        req.onload = function (ev) {
+            var url = URL.createObjectURL(req.response);
+            var au = new Audio(url);
+            au.play().catch(err => {
+                showUnmuteButton();
+            });
+        };
+        req.send(params);
+    };
+    function showUnmuteButton() {
+        window.unmuteBtn.hidden = false;
+    }
+    // スクリプト主導の音声再生ができるかテストする。
+    window.unmuteBtn.hidden = true
+    new Audio("/kiri.wav").play().catch(err => {
+        window.unmuteBtn.hidden = false;
+    });
+    window.unmuteBtn.onclick = ev => {
+        new Audio("/kiri.wav").play().then(_ => {
+            window.unmuteBtn.hidden = true
+        });
+    };
+
+    getNewMessages();
   </script>
 
   </body>
