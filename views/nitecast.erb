@@ -83,36 +83,54 @@
         if ($queue.length > 0) {
             var message = $queue.shift();
             $('#message').html(message);
-            speakAques(message, _ => {
-                setTimeout(function(){
+            var forSpeech = massage(message);
+            speakAques(forSpeech, _ => {
+                setTimeout(_ => {
                     $('#message').html('');
-                    showProcess(true);
-                }, 5000 / ($queue.length+1));
+                    showProcess();
+                }, 10000 / ($queue.length+1));
+                // ↑この式はケアが要る。
             });
         } else {
             $showProcessRunning = false;
         }
     }
+    function massage(text) { // もみもみ
+        // メッセージを読み上げに適した形に修正する。
+        text = text.replace(' <br> ', ' ');
+        return text;
+    }
     function speakAques(text, cont) {
         var req = new XMLHttpRequest();
+        text = massage(text);
         var params = `text=${encodeURI(text)}&format=ogg`;
 
         req.open("POST", "http://speech.pcgw.pgw.jp/v1/tts", true);
         req.responseType = 'blob';
         req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 
-        req.onload = function (ev) {
+        req.addEventListener('load', ev => {
+            // レス着信音を鳴らして、500msのディレイの後にテキストの再生を始める。
             var au = new Audio(URL.createObjectURL(req.response));
             new Audio("/kiri.wav").play().then(_ => {
+                au.addEventListener("ended", _ => {
+                    cont();
+                });
                 setTimeout(_ => {
-                    au.play().then(_ => {
-                        cont();
-                    })
+                    au.play();
                 }, 500);
             });
-        };
+        });
+        req.addEventListener('error', ev => {
+            console.log(ev);
+            const au = new Audio('/failure.wav');
+            au.addEventListener("ended", _ => {
+                cont();
+            });
+            au.play();
+        });
         req.send(params);
-    };
+    }
     function showUnmuteButton() {
         window.unmuteBtn.hidden = false;
     }
