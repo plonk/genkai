@@ -15,6 +15,7 @@
   <div class="form-group">
     <button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#post_dialog">書き込み...</button>
     <div class="btn-group"  style="float: right">
+      <a class="btn btn-default" href="/test/nitecast.cgi/<%= @board.id %>/<%= @thread.id %>/">nitecast</a>
       <a class="btn btn-default" href="/<%= File.join(@board.id, 'dat', @thread.id + '.dat') %>">.dat</a>
       <a class="btn btn-default" href="/admin/boards/<%= File.join(@board.id, @thread.id) %>">レス管理</a>
     </div>
