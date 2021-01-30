@@ -38,7 +38,7 @@
   <body style="margin: 0">
     <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; "><span style="background-color: #c06060; color: #fff; padding-left: 1px">nitecast</span><br><div id="message"></div></div>
 
-  <audio id=kiri preload=auto src="/kiri.wav"></audio>
+  <audio id=kiri2 preload=auto src="/kiri2.wav"></audio>
   <button id=unmuteBtn style="margin-top: 16px; margin-left: 16px">ミュート解除</button>
 
   <script>
@@ -112,7 +112,7 @@
         req.addEventListener('load', ev => {
             // レス着信音を鳴らして、500msのディレイの後にテキストの再生を始める。
             var au = new Audio(URL.createObjectURL(req.response));
-            new Audio("/kiri.wav").play().then(_ => {
+            new Audio("/kiri2.wav").play().then(_ => {
                 au.addEventListener("ended", _ => {
                     cont();
                 });
