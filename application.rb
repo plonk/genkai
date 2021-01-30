@@ -613,6 +613,11 @@ module Genkai
       end
     end
 
+    after do
+      # メモリを節約。
+      GC.start
+    end
+
     # ------ エラー処理 -------
 
     set :show_exceptions, :after_handler
