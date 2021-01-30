@@ -97,7 +97,7 @@
     }
     function massage(text) { // もみもみ
         // メッセージを読み上げに適した形に修正する。
-        text = text.replace(' <br> ', ' ');
+        text = text.replace(/ <br> /g, ' ');
         return text;
     }
     function speakAques(text, cont) {
