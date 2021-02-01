@@ -42,6 +42,14 @@
   <button id=unmuteBtn style="margin-top: 16px; margin-left: 16px">ミュート解除</button>
 
   <script>
+    // クエリ文字列に webapi キーが指定された場合は speech.pcgw.pgw.jp の API を使う。
+    // そうでなければ ブラウザ組み込みの 音声読み上げを使う。
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('webapi') !== null)
+        window.speakDispatch = speakAques;
+    else
+        window.speakDispatch = speakSpeechSynthesis;
+
     // [戻る]→[進む]した時、queueに多量に追加されるのでこれは問題。ペー
     // ジロード時に JS で現在のサイズを取得すべき。
     var $dat_size = <%= @thread.bytesize %>;
@@ -84,11 +92,11 @@
             var message = $queue.shift();
             $('#message').html(message);
             var forSpeech = massage(message);
-            speakAques(forSpeech, _ => {
+            speakDispatch(forSpeech, _ => {
                 setTimeout(_ => {
                     $('#message').html('');
                     showProcess();
-                }, 10000 / ($queue.length+1));
+                }, 5000 / ($queue.length+1));
                 // ↑この式はケアが要る。
             });
         } else {
@@ -102,7 +110,6 @@
     }
     function speakAques(text, cont) {
         var req = new XMLHttpRequest();
-        text = massage(text);
         var params = `text=${encodeURI(text)}&format=ogg`;
 
         req.open("POST", "http://speech.pcgw.pgw.jp/v1/tts", true);
@@ -130,6 +137,39 @@
             au.play();
         });
         req.send(params);
+    }
+    function speakSpeechSynthesis(text, cont) {
+        const synth = window.speechSynthesis;
+        var utter = new SpeechSynthesisUtterance(text);
+        const voices = window.speechSynthesis.getVoices();
+        utter.lang = "ja";
+
+        // console.log("choosing voice");
+        // for (let i = 0; i < voices.length; i++) {
+        //     // BCP 47 なのでハイフン区切りのはずだが、Chrome for Android ではアンダースコアになっている。
+        //     if (voices[i].lang == "ja-JP" || voices[i].lang == "ja_JP" || voices[i].lang == "ja") {
+        //         utter.voice = voices[i];
+        //         console.log(voices[i]);
+        //         break;
+        //     }
+        // }
+
+        new Audio("/kiri2.wav").play().then(_ => {
+            setTimeout(_ => {
+                utter.addEventListener("end", _ => {
+                    cont();
+                });
+                utter.addEventListener("error", ev => {
+                    console.log(ev);
+                    const au = new Audio('/failure.wav');
+                    au.addEventListener("ended", _ => {
+                        cont();
+                    });
+                    au.play();
+                });
+                synth.speak(utter);
+            }, 500);
+        });
     }
     function showUnmuteButton() {
         window.unmuteBtn.hidden = false;
