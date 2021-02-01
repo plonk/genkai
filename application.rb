@@ -596,6 +596,8 @@ module Genkai
         rescue WaitFileChange
           system("inotifywait -q -e DELETE_SELF -t 1 #{path}")
           retry
+        rescue Errno::ENOENT
+          halt 404, "File not found"
         end
       else
         if format == "html"
