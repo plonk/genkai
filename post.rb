@@ -9,7 +9,8 @@ module Genkai
     end
 
     attr :number
-    attr_reader :name, :mail, :body, :date, :subject
+    attr_accessor :date
+    attr_reader :name, :mail, :body, :subject
 
     def initialize(name, mail, date, body, subject, number = nil)
       @name = name
