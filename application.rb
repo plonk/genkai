@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'sinatra'
 require_relative 'settings'
 require_relative 'board'
 require_relative 'thread'
@@ -629,4 +630,22 @@ module Genkai
   class WaitFileChange < Exception
   end
 
+  module_function
+
+  def increment_subject(subject)
+    digit_spans = subject.scan(/\d+/)
+    if digit_spans.empty?
+      return subject + "2"
+    else
+      i = 0
+      return subject.gsub(/\d+/) do |digits|
+        i += 1
+        if i == digit_spans.size
+          (digits.to_i + 1).to_s
+        else
+          digits
+        end
+      end
+    end
+  end
 end
