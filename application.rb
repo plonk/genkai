@@ -6,6 +6,7 @@ require_relative 'thread'
 require_relative 'post_builder'
 require_relative 'thread_list_renderer'
 require_relative 'authentication_information'
+require 'time' # for Time.httpdate, Time#httpdate
 
 module Genkai
   # Genkaiアプリケーション。
@@ -573,6 +574,17 @@ module Genkai
         begin
           # ranged request
           File.open(path, "r") do |f|
+            if env["HTTP_IF_MODIFIED_SINCE"]
+              # 秒未満を切り捨てる。
+              filedate = Time.httpdate(f.stat.mtime.httpdate)
+              if filedate <= Time.httpdate(env["HTTP_IF_MODIFIED_SINCE"])
+                return [304,
+                        {
+                          "Last-Modified" => f.stat.mtime.httpdate,
+                        }]
+              end
+            end
+
             # dat ファイルのサイズを得る。
             f.seek(0, :END)
             size = f.pos
@@ -605,8 +617,11 @@ module Genkai
                 buf = JSON.dump({ "messages" => messages, "dat_size" => size })
               end
               return [206, # Partial Content
-                      { "Content-Range" => "bytes #{lo}-#{hi-1}/#{size}",
-                        "Content-Length" => buf.bytesize.to_s },
+                      {
+                        "Content-Range" => "bytes #{lo}-#{hi-1}/#{size}",
+                        "Content-Length" => buf.bytesize.to_s,
+                        "Last-Modified" => f.stat.mtime.httpdate
+                      },
                       buf]
             elsif lo == size
               if long_polling && Time.now - start < 130
