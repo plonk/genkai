@@ -561,6 +561,8 @@ module Genkai
         headers["Content-Type"] = 'text/html;charset=UTF-8'
       elsif format == "json"
         headers["Content-Type"] = 'application/json;charset=UTF-8'
+      else
+        headers["Content-Type"] = PLAIN_SJIS
       end
 
       if env["HTTP_RANGE"] =~ /\Abytes=(\d+)-(\d+)?\z/
