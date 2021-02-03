@@ -391,13 +391,15 @@ module Genkai
           rescue
           end
           subject = Genkai.increment_subject(thread.subject)
-          builder = PostBuilder.new(@board, next_thread, 'localhost')
-          post = builder.create_post('システム',
-                                     'age', # 次スレはageる。
-                                     thread.posts[0].body,
-                                     subject)
-          next_thread.posts << post
-          next_thread.save
+          if @board.get_all_threads.none? { |t| t.subject == subject }
+            builder = PostBuilder.new(@board, next_thread, 'localhost')
+            post = builder.create_post('システム',
+                                       'age', # 次スレはageる。
+                                       thread.posts[0].body,
+                                       subject)
+            next_thread.posts << post
+            next_thread.save
+          end
 
           # 1001 追加。
           body = @board.thread_stop_message + "\n次スレ: #{subject}"
