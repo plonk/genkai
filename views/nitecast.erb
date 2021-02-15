@@ -119,14 +119,14 @@
         req.addEventListener('load', ev => {
             // レス着信音を鳴らして、500msのディレイの後にテキストの再生を始める。
             var au = new Audio(URL.createObjectURL(req.response));
-            new Audio("/kiri2.wav").play().then(_ => {
-                au.addEventListener("ended", _ => {
-                    cont();
-                });
-                setTimeout(_ => {
-                    au.play();
-                }, 500);
+            au.addEventListener("ended", _ => {
+                cont();
             });
+            var au2 = new Audio("/kiri2.wav");
+            au2.addEventListener("ended", _ => {
+              au.play();
+            });
+            au2.play();
         });
         req.addEventListener('error', ev => {
             console.log(ev);
@@ -154,22 +154,22 @@
         //     }
         // }
 
-        new Audio("/kiri2.wav").play().then(_ => {
-            setTimeout(_ => {
-                utter.addEventListener("end", _ => {
-                    cont();
-                });
-                utter.addEventListener("error", ev => {
-                    console.log(ev);
-                    const au = new Audio('/failure.wav');
-                    au.addEventListener("ended", _ => {
-                        cont();
-                    });
-                    au.play();
-                });
-                synth.speak(utter);
-            }, 500);
+        var ji = new Audio("/kiri2.wav");
+        ji.addEventListener("ended", _ => {
+	    utter.addEventListener("end", _ => {
+		cont();
+	    });
+	    utter.addEventListener("error", ev => {
+		console.log(ev);
+		const au = new Audio('/failure.wav');
+		au.addEventListener("ended", _ => {
+		    cont();
+		});
+		au.play();
+	    });
+	    synth.speak(utter);
         });
+        ji.play();
     }
     function showUnmuteButton() {
         window.unmuteBtn.hidden = false;
