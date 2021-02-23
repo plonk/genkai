@@ -605,6 +605,8 @@ module Genkai
 
       halt 400, "format" unless %w[html json raw].include?(format)
 
+      @board = Board.new(board_path(board))
+
       if format == "html"
         headers["Content-Type"] = 'text/html;charset=UTF-8'
       elsif format == "json"
