@@ -1,0 +1,23 @@
+<ol class="breadcrumb">
+  <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a></li>
+  <li><a href="/<%= @board.id %>/"><%= h @board.title %></a> (設定)</li>
+</ol>
+
+<div class="container">
+  <%= erb :admin_board_tabs, locals: { index: 3 } %>
+
+  <div>
+    <form action="/admin/boards/<%= @board.id %>/ban" method=GET>
+      <input type="text" name="id">
+      <input type="submit" value="IDを追加">
+    </form>
+  </div>
+  
+  <h3><%= ids.size %> 個のBANされたID</h3>
+
+  <ul>
+    <% ids.each do |id| %>
+      <li><%= id %> <a href="/admin/boards/<%= @board.id %>/unban?id=<%= Rack::Utils.escape(id) %>">unban</a></li>  
+    <% end %>
+  </ul>
+</div>
