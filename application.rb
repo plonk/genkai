@@ -25,6 +25,9 @@ module Genkai
       enable :static
       #enable :lock
       mime_type :dat, PLAIN_SJIS
+
+      # "Sinatra doesn't now this ditty." ページなどで UTF-8 指定が付くようにする。
+      add_charset << "text/html"
     end
 
     helpers do
