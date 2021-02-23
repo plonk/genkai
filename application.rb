@@ -185,6 +185,28 @@ module Genkai
       sjis "板#{board}を削除しました。"
     end
 
+    get '/admin/boards/:board/ban' do
+      halt 400, "Invalid ID" unless validate_id(params['id'])
+      ids = (@board.settings["BANNED_IDS"] || "").split
+      ids = ids | [params['id']] # union
+      @board.settings["BANNED_IDS"] = ids.join(' ')
+      @board.settings.save
+      redirect back
+    end
+
+    get '/admin/boards/:board/unban' do
+      halt 400, "Invalid ID" unless validate_id(params['id'])
+      ids = (@board.settings["BANNED_IDS"] || "").split
+      ids = ids - [params['id']] # difference
+      @board.settings["BANNED_IDS"] = ids.join(' ')
+      @board.settings.save
+      redirect back
+    end
+
+    get '/admin/boards/:board/banned-ids' do
+      erb :admin_board_banned_ids, locals: { ids: (@board.settings["BANNED_IDS"] || "").split }
+    end
+
     # スレの編集。削除するレスの選択。
     get '/admin/boards/:board/:sure' do |board, sure|
       @thread = @board.find_thread(sure)
@@ -331,6 +353,10 @@ module Genkai
       redirect back
     end
 
+    def validate_id(str)
+      !!(str =~ %r(\A[A-Za-z0-9+/]{8}\z))
+    end
+
     # ------- nitecast.cgi --------
 
     get '/test/nitecast.cgi/:board/:sure/' do |board, sure|
@@ -383,6 +409,12 @@ module Genkai
 
         remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
         builder = PostBuilder.new(@board, thread, remote_addr)
+        if @board.settings["BANNED_IDS"].include?(builder.id)
+          @title = 'ＥＲＲＯＲ！'
+          @reason = 'ＥＲＲＯＲ：ホスト規制により書き込めませんでした。'
+          content_type HTML_SJIS
+          return erb(:post_error).to_sjis!
+        end
         post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE'))
 
         thread.posts << post

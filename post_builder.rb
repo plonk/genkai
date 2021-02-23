@@ -22,6 +22,8 @@ module Genkai
       end
     end
 
+    attr_reader :id
+
     def initialize(board, thread, remote_addr)
       @board = board
       @thread = thread
