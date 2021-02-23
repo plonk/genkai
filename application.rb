@@ -420,7 +420,7 @@ module Genkai
 
         remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
         builder = PostBuilder.new(@board, thread, remote_addr)
-        if @board.settings["BANNED_IDS"].include?(builder.id)
+        if (@board.settings["BANNED_IDS"] || "").include?(builder.id)
           @title = 'ＥＲＲＯＲ！'
           @reason = 'ＥＲＲＯＲ：ホスト規制により書き込めませんでした。'
           content_type HTML_SJIS
