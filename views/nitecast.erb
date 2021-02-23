@@ -106,8 +106,10 @@
     function massage(text) { // もみもみ
         // メッセージを読み上げに適した形に修正する。
         text = text.replace(/ <br> /g, ' ');
-        text = text.replace(/h?ttps?:\/\/[A-Za-z0-9+\/~_\-.]+/g, "[ここにURL]")
-        text = text.replace(/<a href="[^"]+">&gt;&gt;(\d+)<\/a>/g, (_, p1) => p1);
+        text = text.replace(/h?ttps?:\/\/[A-Za-z0-9+\/~_\-.]+/g, "[URL]");
+        text = text.replace(/<a href="[^"]+">&gt;&gt;(\d+)<\/a>/g, (_, p1) => p1 + " ");
+        text = text.replace(/&#x?\d+;/g, ""); // 数値実体参照を全削除する。
+        text = text.replace(/.{4,}/g, m => m.slice(0, 4)); // 4つ以上連続する文字を4つ目以降削除する。
         return text;
     }
     function speakAques(text, cont) {
