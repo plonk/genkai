@@ -367,6 +367,17 @@ module Genkai
       erb(:nitecast, layout: false).to_sjis!
     end
 
+    get '/test/nitecast.cgi/:board/' do |board|
+      @board = Board.new(board_path(board))
+      threads = @board.get_all_threads
+      active_thread = threads.sort_by(&:mtime).reverse.find { |t| t.size < 1000 }
+      if active_thread
+        redirect to("/test/nitecast.cgi/#{@board.id}/#{active_thread.id}/?#{request.query_string}")
+      else
+        halt 404, "空いてるスレッドないです。"
+      end
+    end
+
     # ------- bbs.cgi --------
 
     before '/test/bbs.cgi' do
