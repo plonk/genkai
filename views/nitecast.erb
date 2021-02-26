@@ -135,9 +135,15 @@
             });
             var au2 = new Audio("/kiri2.wav");
             au2.addEventListener("ended", _ => {
-              au.play();
+                au.play().catch(err => {
+                    console.log(err);
+                    cont();
+                });
             });
-            au2.play();
+            au2.play().catch(err => {
+                console.log(err);
+                cont();
+            });
         });
         req.addEventListener('error', ev => {
             console.log(ev);
@@ -145,7 +151,10 @@
             au.addEventListener("ended", _ => {
                 cont();
             });
-            au.play();
+            au.play().catch(err => {
+                console.log(err);
+                cont();
+            });
         });
         req.send(params);
     }
@@ -155,22 +164,28 @@
         const voices = window.speechSynthesis.getVoices();
         utter.lang = "ja";
 
-        var ji = new Audio("/kiri2.wav");
-        ji.addEventListener("ended", _ => {
-	    utter.addEventListener("end", _ => {
-		cont();
-	    });
-	    utter.addEventListener("error", ev => {
-		console.log(ev);
-		const au = new Audio('/failure.wav');
-		au.addEventListener("ended", _ => {
-		    cont();
-		});
-		au.play();
-	    });
-	    synth.speak(utter);
+        var notify = new Audio("/kiri2.wav");
+        notify.addEventListener("ended", _ => {
+            utter.addEventListener("end", _ => {
+                cont();
+            });
+            utter.addEventListener("error", ev => {
+                console.log(ev);
+                const au = new Audio('/failure.wav');
+                au.addEventListener("ended", _ => {
+                    cont();
+                });
+                au.play().catch(err => {
+                    console.log(err);
+                    cont();
+                });
+            });
+            synth.speak(utter)
         });
-        ji.play();
+        notify.play().catch(err => {
+            console.log(err);
+            cont();
+        });
     }
     function showUnmuteButton() {
         window.unmuteBtn.hidden = false;
