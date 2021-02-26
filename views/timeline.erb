@@ -12,14 +12,18 @@
     <span class="badge"><%= @thread.size %></span>
   </h1>
 
-  <div class="form-group">
-    <button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#post_dialog">書き込み...</button>
-    <div class="btn-group"  style="float: right">
+  <button style="position: fixed; bottom: 15px; right: 15px;" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#post_dialog"><span class="glyphicon glyphicon-pencil"></span>&thinsp;カキコ</button>
+
+  <div class="form-group" style="text-align: right">
+    <div class="btn-group" style="margin-bottom: 20px">
       <a class="btn btn-default" href="/test/nitecast.cgi/<%= @board.id %>/<%= @thread.id %>/">nitecast</a>
       <a class="btn btn-default" href="/<%= File.join(@board.id, 'dat', @thread.id + '.dat') %>">.dat</a>
       <a class="btn btn-default" href="/admin/boards/<%= File.join(@board.id, @thread.id) %>">レス管理</a>
     </div>
-
+    <a class="btn btn-default btn-block" href="#bottom">
+      <span class="glyphicon glyphicon-arrow-down"></span>
+      下に行く
+    </a>
   </div>
 
 
@@ -71,6 +75,8 @@
       上に戻る
     </a>
   </div>
+
+  <a name="bottom"></a>
 
   <%= erb :post_dialog %>
 </div>
