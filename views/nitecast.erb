@@ -155,16 +155,6 @@
         const voices = window.speechSynthesis.getVoices();
         utter.lang = "ja";
 
-        // console.log("choosing voice");
-        // for (let i = 0; i < voices.length; i++) {
-        //     // BCP 47 なのでハイフン区切りのはずだが、Chrome for Android ではアンダースコアになっている。
-        //     if (voices[i].lang == "ja-JP" || voices[i].lang == "ja_JP" || voices[i].lang == "ja") {
-        //         utter.voice = voices[i];
-        //         console.log(voices[i]);
-        //         break;
-        //     }
-        // }
-
         var ji = new Audio("/kiri2.wav");
         ji.addEventListener("ended", _ => {
 	    utter.addEventListener("end", _ => {
