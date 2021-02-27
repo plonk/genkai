@@ -418,6 +418,14 @@ module Genkai
           return erb(:post_error).to_sjis!
         end
 
+        # 存在しないスレッドに書き込もうとしている。
+        if thread.size == 0
+          @title = 'ＥＲＲＯＲ！'
+          @reason = 'ＥＲＲＯＲ：スレッドがありません。'
+          content_type HTML_SJIS
+          return erb(:post_error).to_sjis!
+        end
+
         remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
         builder = PostBuilder.new(@board, thread, remote_addr)
         if (@board.settings["BANNED_IDS"] || "").include?(builder.id)
