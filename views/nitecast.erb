@@ -115,7 +115,17 @@
         text = text.replace(/h?ttps?:\/\/[A-Za-z0-9+\/~_\-.]+/g, "[URL]");
         text = text.replace(/<a href="[^"]+">&gt;&gt;(\d+)<\/a>/g, (_, p1) => p1 + " ");
         text = text.replace(/&#x?\d+;/g, ""); // 数値実体参照を全削除する。
-        text = text.replace(/(.)\1{3,}/g, m => m.slice(0, 4)); // 4つ以上連続する文字を4つ目以降削除する。
+
+        // 繰り返しを省略する。
+        let oldlength = text.length;
+        while (true) {
+            text = text.replace(/(.+?)\1{3,}/g, (m, c1) => { /* console.log(c1); */ return c1; });
+            if (text.length === oldlength)
+                break;
+            else
+                oldlength = text.length;
+        }
+        
         text = htmlUnescape(text);
         return text;
     }
