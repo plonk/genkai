@@ -398,6 +398,12 @@ module Genkai
       end
     end
 
+    def error_response(message)
+      @title = 'ＥＲＲＯＲ！'
+      @reason = "ＥＲＲＯＲ：#{message}"
+      erb(:post_error)
+    end
+
     # パラメーター
     # bbs: 板名
     # key: スレ番号
@@ -409,37 +415,29 @@ module Genkai
       check_non_blank!('key', 'MESSAGE')
 
       if params['MESSAGE'].size > 140
-        @title = 'ＥＲＲＯＲ！'
-        @reason = 'ＥＲＲＯＲ：文字数が多すぎて投稿できません。'
         content_type HTML_SJIS
-        return erb(:post_error).to_sjis!
+        return error_response('文字数が多すぎて投稿できません。').to_sjis!
       end
       
       @@post_lock.synchronize do
 
         thread = ThreadFile.new(dat_path(params['bbs'], params['key']))
         if thread.size >= 1000
-          @title = 'ＥＲＲＯＲ！'
-          @reason = 'ＥＲＲＯＲ：スレッドストップです。'
           content_type HTML_SJIS
-          return erb(:post_error).to_sjis!
+          return error_response('スレッドストップです。').to_sjis!
         end
 
         # 存在しないスレッドに書き込もうとしている。
         if thread.size == 0
-          @title = 'ＥＲＲＯＲ！'
-          @reason = 'ＥＲＲＯＲ：スレッドがありません。'
           content_type HTML_SJIS
-          return erb(:post_error).to_sjis!
+          return error_response('スレッドがありません。').to_sjis!
         end
 
         remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
         builder = PostBuilder.new(@board, thread, remote_addr)
         if (@board.settings["BANNED_IDS"] || "").include?(builder.id)
-          @title = 'ＥＲＲＯＲ！'
-          @reason = 'ＥＲＲＯＲ：ホスト規制により書き込めませんでした。'
           content_type HTML_SJIS
-          return erb(:post_error).to_sjis!
+          return error_response('ホスト規制により書き込めませんでした。').to_sjis!
         end
         post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE'))
 
