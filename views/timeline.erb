@@ -12,18 +12,12 @@
     <span class="badge"><%= @thread.size %></span>
   </h1>
 
-  <button style="position: fixed; bottom: 15px; right: 15px;" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#post_dialog"><span class="glyphicon glyphicon-pencil"></span>&thinsp;カキコ</button>
-
   <div class="form-group" style="text-align: right">
-    <div class="btn-group" style="margin-bottom: 20px">
+    <div class="btn-group">
       <a class="btn btn-default" href="/test/nitecast.cgi/<%= @board.id %>/<%= @thread.id %>/">nitecast</a>
       <a class="btn btn-default" href="/<%= File.join(@board.id, 'dat', @thread.id + '.dat') %>">.dat</a>
       <a class="btn btn-default" href="/admin/boards/<%= File.join(@board.id, @thread.id) %>">レス管理</a>
     </div>
-    <a class="btn btn-default btn-block" href="#bottom">
-      <span class="glyphicon glyphicon-arrow-down"></span>
-      下に行く
-    </a>
   </div>
 
 
@@ -69,11 +63,18 @@
    getNewMessages();
   </script>
 
-  <div class="form-group">
-    <a class="btn btn-default btn-block" href="#top">
-      <span class="glyphicon glyphicon-arrow-up"></span>
+  <div class="form-group" style="text-align: right; position: fixed; bottom: 2em; right: 2em">
+    <a class="btn btn-default" href="#bottom" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
+      <span class="glyphicon glyphicon-arrow-down" style="text-decoration: underline; text-decoration-thickness: 3px"></span>
+      下に行く
+    </a>
+    <a class="btn btn-default" href="#top" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
+      <span class="glyphicon glyphicon-arrow-up" style="text-decoration: overline; text-decoration-thickness: 3px"></span>
       上に戻る
     </a>
+    <button class="btn btn-primary" data-toggle="modal" data-target="#post_dialog" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
+      <span class="glyphicon glyphicon-pencil"></span>&thinsp;カキコ...
+    </button>
   </div>
 
   <a name="bottom"></a>
