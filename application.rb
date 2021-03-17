@@ -576,22 +576,56 @@ module Genkai
       redirect to("/#{board}/")
     end
 
+    require 'ostruct'
     # 板トップ
     get '/:board/' do |board|
       @board = Board.new(board_path(board))
-      @threads = @board.get_all_threads.sort_by(&:mtime).reverse
       @title = @board.title
 
+      make_subject_txt(board)
+      text = File.read(board_path(board) / "subject.txt", encoding: "CP932").to_utf8!
+      @threads = text.each_line.map { |line|
+        line.chomp
+        if line =~ /^(\d+).dat<>(.+?) \((\d+)\)$/
+          OpenStruct.new(id: $1, subject: $2, size: $3.to_i)
+        else
+          halt 400, "corrupt subject.txt?"
+        end
+      }
       content_type HTML_SJIS
       erb(:ita_top).to_sjis!
     end
 
-    get '/:board/subject.txt' do |board|
-      @board = Board.new(board_path(board))
-      renderer = ThreadListRenderer.new(@board.get_all_threads)
+    def make_subject_txt(board)
+      subject_path = board_path(board) / "subject.txt"
+      threads = Board.new(board_path(board)).get_all_threads
 
+      regen = false
+      if File.exist?(subject_path)
+        st = File.mtime(subject_path)
+        unless threads.all? { |t| t.mtime < st }
+          regen = true
+        end
+      else
+        regen = true
+      end
+
+      if regen
+        renderer = ThreadListRenderer.new(threads)
+        data = renderer.render.to_sjis
+        File.open(subject_path, "w") do |f|
+          f.write(data)
+        end
+        true
+      else
+        false
+      end
+    end
+
+    get '/:board/subject.txt' do |board|
+      make_subject_txt(board)
       content_type PLAIN_SJIS
-      sjis renderer.render.to_sjis
+      send_file(board_path(board) / "subject.txt")
     end
 
     get '/:board/SETTING.TXT' do |board|
