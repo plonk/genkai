@@ -26,7 +26,7 @@
       <h4>スレッド一覧</h4>
     </div>
     <div class="list-group">
-      <% @threads.each.with_index do |thread, i| %>
+      <% @threads.each.with_index do |thread| %>
         <a class="list-group-item" href="/test/read.cgi/<%= @board.id + '/' + thread.id %>">
           <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.size %></span></a>
       <% end %>
