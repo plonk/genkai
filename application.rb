@@ -441,6 +441,31 @@ module Genkai
         end
         post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE'))
 
+        # ポートチェック
+        proc do
+          result = []
+          [ Thread.start { result << system("curl -I --connect-timeout 3 http://#{remote_addr}/") },
+            Thread.start { result << system("curl -I --connect-timeout 3 http://#{remote_addr}:8080/") },
+            Thread.start { result << system("curl -I --connect-timeout 3 https://#{remote_addr}/") } ].each do |t|
+            t.join
+          end
+          if result.any?
+            content_type HTML_SJIS
+            return error_response('特定のポートが空いているホストからは書き込めません。').to_sjis!
+          end
+        end.()
+
+        # 逆引きチェック
+        unless system("nslookup #{remote_addr}")
+          content_type HTML_SJIS
+          return error_response('逆引きチェック失敗。').to_sjis!
+        end          
+        
+        if thread.posts.any? { |x| x.body == post.body }
+          content_type HTML_SJIS
+          return error_response('重複する内容は書き込めません。').to_sjis!
+        end
+        
         thread.posts << post
 
         if thread.posts.size == 1000
