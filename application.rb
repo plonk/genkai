@@ -404,6 +404,8 @@ module Genkai
       erb(:post_error)
     end
 
+    NG_REGEXP = /今井|宗像|市営住宅|殺|死/
+
     # パラメーター
     # bbs: 板名
     # key: スレ番号
@@ -440,6 +442,13 @@ module Genkai
           return error_response('ホスト規制により書き込めませんでした。').to_sjis!
         end
         post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE'))
+
+        proc do
+          if post.body.gsub(/[ -~]/, '') =~ NG_REGEXP
+            content_type HTML_SJIS
+            return error_response('その内容のメッセージは書き込めません。').to_sjis!
+          end
+        end.()
 
         # ポートチェック
         proc do
