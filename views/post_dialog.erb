@@ -8,7 +8,7 @@
         <h4 class="modal-title"><%= h @thread.subject %>に書き込み</h4>
       </div>
 
-      <form class="form" action="/test/bbs.cgi" method="POST">
+      <form class="form" action="/test/bbs.cgi" method="POST" onsubmit="submitHook()">
         <div class="modal-body">
           <div class="form-group">
             <label class="control-label">
@@ -31,6 +31,7 @@
 
         <div class="modal-footer">
           <div class="form-group">
+            <label><input type="checkbox" id="remember"> 名前とE-mailを記憶する</label>
             <input class="btn btn-primary" type="submit" name="submit" value="書き込む">
           </div>
         </div>
@@ -38,3 +39,23 @@
     </div>
   </div>
 </div>
+<script>
+ function submitHook(){
+     if ($('#remember')[0].checked) {
+         localStorage.setItem('name', $('input[name=mail]')[0].value);
+         localStorage.setItem('FROM', $('input[name=FROM]')[0].value);
+     } else {
+         localStorage.removeItem('name');
+         localStorage.removeItem('FROM');
+     }
+ }
+ $(function(){
+     if (localStorage.name || localStorage.FROM) {
+         $('#remember')[0].checked = true;
+         $('input[name=mail]')[0].value = localStorage.getItem('name');
+         $('input[name=FROM]')[0].value = localStorage.getItem('FROM');
+     } else {
+         $('#remember')[0].checked = false;
+     }
+ });
+</script>
