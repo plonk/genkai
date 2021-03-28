@@ -392,6 +392,17 @@ module Genkai
         post_message
       when '新規スレッド作成'
         # halt 403, 'unimplemented'
+        board = params['bbs']
+        auth = Rack::Auth::Basic::Request.new(request.env)
+        unless authentic?(auth)
+          # 板ごとの認証
+          key = "PASSWORD_#{board}"
+          unless @site_settings[key] != nil &&
+                 auth.provided? && auth.basic? && auth.credentials == [board, @site_settings[key]]
+            response['WWW-Authenticate'] = 'Basic realm="Admin area"'
+            halt 401, 'Not Authorized'
+          end
+        end
         create_thread
       else
         halt 400, 'Unknown command'
