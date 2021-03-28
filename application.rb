@@ -648,7 +648,7 @@ module Genkai
       regen = false
       if File.exist?(subject_path)
         st = File.mtime(subject_path)
-        unless threads.all? { |t| t.mtime < st }
+        unless threads.all? { |t| t.mtime < st } && File.mtime(board_path(board) / "dat") < st
           regen = true
         end
       else
