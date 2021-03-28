@@ -52,7 +52,7 @@
 
     // [戻る]→[進む]した時、queueに多量に追加されるのでこれは問題。ペー
     // ジロード時に JS で現在のサイズを取得すべき。
-    var $dat_size = <%= @thread.bytesize %>;
+    var $dat_size = null;
 
     var $queue = [];
     function getNewMessages() {
@@ -74,7 +74,7 @@
                            getNewMessages();
                        } else {
                            console.log(textStatus);
-                           setTimeout(getNewMessages, 30*1000);
+                           setTimeout(initialize, 5*1000);
                        }
                    },
                    timeout: 120*1000,
@@ -211,7 +211,24 @@
         });
     };
 
-    getNewMessages();
+    function initialize() {
+        $.ajax("/<%= [@board.id, 'dat', @thread.id + '.dat'].join('/') %>",
+               {
+                   type: 'HEAD',
+                   cache: false,
+                   success: function(data, textStatus, jqXHR){
+                       console.log('$dat_size =', jqXHR.getResponseHeader('Content-Length'));
+                       $dat_size = +jqXHR.getResponseHeader('Content-Length');
+                       getNewMessages();
+                   },
+                   error: function(req, textStatus){
+                       setTimeout(initialize, 30*1000);
+                   },
+                   timeout: 5*1000,
+               });
+    }
+
+    initialize();
   </script>
 
   </body>
