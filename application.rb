@@ -476,10 +476,15 @@ module Genkai
         end.()
 
         # 逆引きチェック
-        unless system("nslookup #{remote_addr}")
+        begin
+          unless Resolv.getname(remote_addr) =~ /.jp\Z/
+            content_type HTML_SJIS
+            return error_response('jp').to_sjis!
+          end          
+        rescue Resolv::ResolvError
           content_type HTML_SJIS
           return error_response('逆引きチェック失敗。').to_sjis!
-        end          
+        end
         
         if thread.posts.any? { |x| x.body == post.body }
           content_type HTML_SJIS
