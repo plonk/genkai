@@ -41,7 +41,7 @@
                       $("html, body").animate({ scrollTop: $(document).height() }, "slow");
                       var size = jqXHR.getResponseHeader("Content-Range").split("/")[1];
                       if (size) {
-                          $dat_size = size;
+                          $dat_size = +size;
                           getNewMessages();
                       } else {
                           console.error("failed to parse Content-Range header");
