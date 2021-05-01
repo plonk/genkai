@@ -30,37 +30,50 @@
   <script>
    var $dat_size = <%= @dat_size %>;
    function getNewMessages() {
-       //console.log("getNewMessages");
-       $.ajax("/<%= @board.id %>/dat/<%= @thread.id %>.dat?long_polling=1&format=html",
-              {
-                  headers: { Range: "bytes=" + $dat_size + "-" },
-                  cache: false,
-                  dataType: 'html',
-                  success: function(data, textStatus, jqXHR){
-                      $('#timeline').html($('#timeline').html() + data);
-                      $("html, body").animate({ scrollTop: $(document).height() }, "slow");
-                      var size = jqXHR.getResponseHeader("Content-Range").split("/")[1];
-                      if (size) {
-                          $dat_size = +size;
-                          getNewMessages();
-                      } else {
-                          console.error("failed to parse Content-Range header");
-                          console.log(jqXHR.getResponseHeader("Content-Range"));
-                      }
-                  },
-                  error: function(req, textStatus){
-                      if (textStatus == "timeout") {
-                          //console.log("timeout");
-                          setTimeout(getNewMessages, 0);
-                      } else {
-                          console.log(textStatus);
-                          setTimeout(getNewMessages, 10*1000);
-                      }
-                  },
-                  timeout: 120*1000,
-              });
+       return new Promise((resolve, reject) => {
+           return $.ajax("/<%= @board.id %>/dat/<%= @thread.id %>.dat?long_polling=1&format=html",
+                         {
+                             headers: { Range: "bytes=" + $dat_size + "-" },
+                             cache: false,
+                             dataType: 'html',
+                             timeout: 120*1000,
+                             success(data, textStatus, jqXHR) {
+                                 resolve([data, textStatus, jqXHR]);
+                             },
+                             error(req, textStatus) {
+                                 reject([req, textStatus]);
+                             },
+           });
+       });
    }
-   getNewMessages();
+   function delay(ms) {
+       return new Promise((resolve, _reject) => setTimeout(resolve, ms));
+   }
+   async function main() {
+       while (true) {
+           try {
+               var [data, textStatus, jqXHR] = await getNewMessages();
+
+               $('#timeline').html($('#timeline').html() + data);
+               $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+               var size = jqXHR.getResponseHeader("Content-Range").split("/")[1];
+               if (size) {
+                   $dat_size = +size;
+               } else {
+                   console.error("failed to parse Content-Range header");
+                   console.log(jqXHR.getResponseHeader("Content-Range"));
+               }
+           } catch ([req, textStatus]) {
+               if (textStatus == "timeout") {
+                   console.log("timeout");
+               } else {
+                   console.log(textStatus);
+                   await delay(10*1000);
+               }
+           }
+       }
+   }
+   main();
   </script>
 
   <div class="form-group" style="text-align: right; position: fixed; bottom: 2em; right: 2em">

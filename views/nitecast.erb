@@ -47,64 +47,41 @@
     // そうでなければ ブラウザ組み込みの 音声読み上げを使う。
     const params = new URLSearchParams(window.location.search)
     if (params.get('webapi') !== null)
-        window.speakDispatch = speakAques;
+        window.speakDispatch = speakHttpApi;
     else
         window.speakDispatch = speakSpeechSynthesis;
 
-    // [戻る]→[進む]した時、queueに多量に追加されるのでこれは問題。ペー
-    // ジロード時に JS で現在のサイズを取得すべき。
     var $dat_size = null;
 
     var $queue = [];
-    function getNewMessages() {
+    async function getNewMessages() {
         console.log("getNewMessages");
-        $.ajax("/<%= [@board.id, 'dat', @thread.id + '.dat'].join('/') %>?long_polling=1&format=json",
-               {
-                   headers: { Range: "bytes=" + $dat_size + "-" },
-                   cache: false,
-                   dataType: 'json',
-                   success: function(data, textStatus, jqXHR){
-                       console.log(data.messages);
-                       $queue = $queue.concat(data.messages);
-                       setTimeout(startShowProcess, 0);
-                       $dat_size = data.dat_size;
-                       getNewMessages();
-                   },
-                   error: function(req, textStatus){
-                       if (textStatus == "timeout") {
-                           getNewMessages();
-                       } else {
-                           console.log(textStatus);
-                           setTimeout(initialize, 5*1000);
-                       }
-                   },
-                   timeout: 120*1000,
-               });
+        return new Promise((resolve, reject) =>
+            $.ajax("/<%= @board.id %>/dat/<%= @thread.id %>.dat?long_polling=1&format=json",
+                   {
+                       headers: { Range: "bytes=" + $dat_size + "-" },
+                       cache: false,
+                       dataType: 'json',
+                       success: function(data, textStatus, jqXHR){
+                           resolve(data);
+                       },
+                       error: function(req, textStatus){
+                           reject(textStatus);
+                       },
+                       timeout: 120*1000,
+            }));
     }
-    var $showProcessRunning = false;
-    function startShowProcess() {
-        if ($showProcessRunning) return;
-        showProcess();
+    async function showNextMessage() {
+        var message = $queue.shift();
+        $('#message').html(message);
+        var forSpeech = massage(message);
+        console.log("forSpeech", forSpeech);
+        await speakDispatch(forSpeech);
+        await delay(5000 / ($queue.length+1));
+        // ↑この式はケアが要る。
+        $('#message').html('');
     }
-    function showProcess() {
-        console.log("showProcess");
-        $showProcessRunning = true;
-        if ($queue.length > 0) {
-            var message = $queue.shift();
-            $('#message').html(message);
-            var forSpeech = massage(message);
-            console.log("forSpeech", forSpeech);
-            speakDispatch(forSpeech, _ => {
-                setTimeout(_ => {
-                    $('#message').html('');
-                    showProcess();
-                }, 5000 / ($queue.length+1));
-                // ↑この式はケアが要る。
-            });
-        } else {
-            $showProcessRunning = false;
-        }
-    }
+
     function htmlUnescape(str) {
         var textArea = document.createElement('textarea');
         textArea.innerHTML = str;
@@ -130,57 +107,34 @@
         text = htmlUnescape(text);
         return text;
     }
-    function speakAques(text, cont) {
-        var req = new XMLHttpRequest();
-        var params = `text=${encodeURI(text)}&format=ogg`;
+    function speakHttpApi(text) {
+        return new Promise(cont => {
+            var req = new XMLHttpRequest();
+            var params = `text=${encodeURI(text)}&format=ogg`;
 
-        req.open("POST", "http://speech.pcgw.pgw.jp/v1/tts", true);
-        req.responseType = 'blob';
-        req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            req.open("POST", "http://speech.pcgw.pgw.jp/v1/tts", true);
+            req.responseType = 'blob';
+            req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 
-        req.addEventListener('load', ev => {
-            // レス着信音を鳴らして、500msのディレイの後にテキストの再生を始める。
-            var au = new Audio(URL.createObjectURL(req.response));
-            au.addEventListener("ended", _ => {
-                cont();
-            });
-            var au2 = new Audio("/kiri2.wav");
-            au2.addEventListener("ended", _ => {
-                au.play().catch(err => {
+            req.addEventListener('load', ev => {
+                // レス着信音を鳴らして、500msのディレイの後にテキストの再生を始める。
+                var au = new Audio(URL.createObjectURL(req.response));
+                au.addEventListener("ended", _ => {
+                    cont();
+                });
+                var au2 = new Audio("/kiri2.wav");
+                au2.addEventListener("ended", _ => {
+                    au.play().catch(err => {
+                        console.log(err);
+                        cont();
+                    });
+                });
+                au2.play().catch(err => {
                     console.log(err);
                     cont();
                 });
             });
-            au2.play().catch(err => {
-                console.log(err);
-                cont();
-            });
-        });
-        req.addEventListener('error', ev => {
-            console.log(ev);
-            const au = new Audio('/failure.wav');
-            au.addEventListener("ended", _ => {
-                cont();
-            });
-            au.play().catch(err => {
-                console.log(err);
-                cont();
-            });
-        });
-        req.send(params);
-    }
-    function speakSpeechSynthesis(text, cont) {
-        const synth = window.speechSynthesis;
-        var utter = new SpeechSynthesisUtterance(text);
-        const voices = window.speechSynthesis.getVoices();
-        utter.lang = "ja";
-
-        var notify = new Audio("/kiri2.wav");
-        notify.addEventListener("ended", _ => {
-            utter.addEventListener("end", _ => {
-                cont();
-            });
-            utter.addEventListener("error", ev => {
+            req.addEventListener('error', ev => {
                 console.log(ev);
                 const au = new Audio('/failure.wav');
                 au.addEventListener("ended", _ => {
@@ -191,11 +145,38 @@
                     cont();
                 });
             });
-            synth.speak(utter)
+            req.send(params);
         });
-        notify.play().catch(err => {
-            console.log(err);
-            cont();
+    }
+    function speakSpeechSynthesis(text) {
+        return new Promise(cont => {
+            const synth = window.speechSynthesis;
+            var utter = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+            utter.lang = "ja";
+
+            var notify = new Audio("/kiri2.wav");
+            notify.addEventListener("ended", _ => {
+                utter.addEventListener("end", _ => {
+                    cont();
+                });
+                utter.addEventListener("error", ev => {
+                    console.log(ev);
+                    const au = new Audio('/failure.wav');
+                    au.addEventListener("ended", _ => {
+                        cont();
+                    });
+                    au.play().catch(err => {
+                        console.log(err);
+                        cont();
+                    });
+                });
+                synth.speak(utter)
+            });
+            notify.play().catch(err => {
+                console.log(err);
+                cont();
+            });
         });
     }
     function showUnmuteButton() {
@@ -212,24 +193,60 @@
         });
     };
 
-    function initialize() {
-        $.ajax("/<%= [@board.id, 'dat', @thread.id + '.dat'].join('/') %>",
-               {
-                   type: 'HEAD',
-                   cache: false,
-                   success: function(data, textStatus, jqXHR){
-                       console.log('$dat_size =', jqXHR.getResponseHeader('Content-Length'));
-                       $dat_size = +jqXHR.getResponseHeader('Content-Length');
-                       getNewMessages();
-                   },
-                   error: function(req, textStatus){
-                       setTimeout(initialize, 30*1000);
-                   },
-                   timeout: 5*1000,
-               });
+    function getInitialDatSize() {
+        return new Promise((resolve, reject) =>
+            $.ajax("/<%= @board.id %>/dat/<%= @thread.id %>.dat",
+                   {
+                       type: 'HEAD',
+                       cache: false,
+                       success: function(data, textStatus, jqXHR){
+                           console.log('$dat_size =', jqXHR.getResponseHeader('Content-Length'));
+                           $dat_size = +jqXHR.getResponseHeader('Content-Length');
+                           resolve($dat_size);
+                       },
+                       error: function(req, textStatus){
+                           reject(textStatus);
+                       },
+                       timeout: 5*1000,
+            }));
     }
 
-    initialize();
+    function delay(ms) {
+        return new Promise((resolve, _reject) => setTimeout(resolve, ms));
+    }
+
+    async function main() {
+        while ($dat_size === null) {
+            try {
+                $dat_size = await getInitialDatSize();
+            } catch(textStatus) {
+                if (textStatus != "timeout")
+                    await delay(10*1000);
+            }
+        }
+
+        while (true) {
+            while (true) {
+                try {
+                    var data = await getNewMessages();
+                    console.log(data.messages);
+
+                    $queue = $queue.concat(data.messages);
+                    $dat_size = data.dat_size;
+                    break;
+                } catch(textStatus) {
+                    if (textStatus !== "timeout") {
+                        delay(5*1000);
+                    }
+                }
+            }
+
+            while ($queue.length) {
+                await showNextMessage();
+            }
+        }
+    }
+    main();
   </script>
 
   </body>
