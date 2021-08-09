@@ -1,23 +1,20 @@
-<div class="media" style="border-top: solid 2px #eee">
-  <div class="media-left">
-  </div>
-  <div class="media-body">
-    <div>
-      <h4 class="media-heading"><%= post.number %>
-        :
-        <small class="text-muted" style="float: right">
-          <% if post.mail.empty? then %>
-            <%= h post.name %>
-          <% else %>
-            <a href="mailto:<%= h post.mail %>"><%= h post.name %></a>
-          <% end %>
-          <%= h post.date_proper %>
-          <% if post.id %>
-            <a href="/admin/boards/<%= @board.id %>/ban?id=<%= Rack::Utils.escape(post.id) %>">ID:<%= h post.id %></a>
-          <% end %>
-        </small>
-      </h4>
+<div class="media" style="padding: 5px 0 5px 0; border-top: solid 2px #eee">
+    <div class="media-left">
     </div>
-    <span class="nichan-message"><%= post.body %></span>
-  </div>
+    <div class="media-body">
+        <div style="">
+            <h4 class="text-muted media-heading" style="font-size:small"><%= post.number %>:
+                <% if post.mail.empty? then %>
+                    <%= h post.name %>
+                <% else %>
+                    <a class="do-nothing" href="#" title="<%= h post.mail %>"><%= h post.name %></a>
+                <% end %>
+                <%= h post.date_proper %>
+                <% if post.id %>
+                    <a href="/admin/boards/<%= @board.id %>/ban?id=<%= Rack::Utils.escape(post.id) %>">ID:<%= h post.id %></a>
+                <% end %>
+            </h4>
+            <div class="nichan-message"><%= post.body %></div>
+        </div>
+    </div>
 </div>

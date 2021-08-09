@@ -7,6 +7,8 @@ require_relative 'post_builder'
 require_relative 'thread_list_renderer'
 require_relative 'authentication_information'
 require 'time' # for Time.httpdate, Time#httpdate
+require_relative 'peercast'
+require 'resolv'
 
 module Genkai
   # Genkaiアプリケーション。
@@ -93,6 +95,8 @@ module Genkai
 
     @@site_settings = SettingsFile.new('SETTING.TXT')
     @@post_lock = Monitor.new
+
+    @@trees = nil # リレーツリーのキャッシュ。
 
     before do
       @site_settings = @@site_settings
@@ -415,7 +419,45 @@ module Genkai
       erb(:post_error)
     end
 
-    NG_REGEXP = /今井|宗像|市営住宅|殺|死/
+    # String =~ nil は nil になるようなのでこれでいいだろう。
+    NG_REGEXP = eval(File.read("ng_exp.txt")) rescue nil
+
+    def is_in_relay_tree(tree, remote_addr)
+      raise TypeError, "tree must be a Hash" unless tree.is_a? Hash
+
+      unless remote_addr =~ /\A\d+\.\d+\.\d+\.\d+\z/
+        raise 'not an IPv4 address'
+      end
+      if tree['address'] == remote_addr
+        return [tree]
+      elsif tree['children']
+        return tree['children'].inject([]) { |acc,subtree| acc + is_in_relay_tree(subtree, remote_addr) }
+      else
+        return []
+      end
+    end
+
+    def find_node(top_nodes, remote_addr)
+      raise TypeError, "top_nodes must be an Enumerable" unless top_nodes.is_a?(Enumerable)
+
+      return top_nodes.inject([]) { |acc,tree| acc + is_in_relay_tree(tree, remote_addr) }
+    end
+
+    def extra_label(node)
+      label = ""
+      if node['isFirewalled']
+        label = "ポト０"
+      end
+
+      if node['isRelayFull'] && node['localRelays'] == 0
+        label += "紫"
+      elsif node['isRelayFull'] && node['localRelays'] > 0
+        label += "青"
+      elsif node['localRelays'] >= 0
+        label += "緑"
+      end
+      return label
+    end
 
     # パラメーター
     # bbs: 板名
@@ -426,6 +468,10 @@ module Genkai
     def post_message
       convert_params_to_utf8!
       check_non_blank!('key', 'MESSAGE')
+
+puts '--post message--'
+p env
+p params
 
       if params['MESSAGE'].size > 140
         content_type HTML_SJIS
@@ -447,44 +493,93 @@ module Genkai
         end
 
         remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
-        builder = PostBuilder.new(@board, thread, remote_addr)
-        if (@board.settings["BANNED_IDS"] || "").include?(builder.id)
-          content_type HTML_SJIS
-          return error_response('ホスト規制により書き込めませんでした。').to_sjis!
-        end
-        post = builder.create_post(*params.values_at('FROM', 'mail', 'MESSAGE'))
 
+        nodes = []
         proc do
-          if post.body.gsub(/[ -~]/, '') =~ NG_REGEXP
-            content_type HTML_SJIS
-            return error_response('その内容のメッセージは書き込めません。').to_sjis!
+          # TP 7148; SP 7152; Heisei 7150; Turf 7154
+          for port in [8144] #[7148, 7150, 7152, 7154]
+            peercast = Peercast.new('localhost', port)
+            channels = peercast.getChannels
+p channels
+            ch = channels.find { |i| i['info']['name'] =~ /流刑地/ }
+            chid = nil
+            network = nil
+            if ch
+              chid = ch['channelId']
+              network = ch['status']['network'] || 'ipv4'
+            end
+            if chid && network == "ipv4"
+              trees = peercast.getChannelRelayTree(chid)
+              if (nodes += find_node(trees, remote_addr)).any?
+                break
+              else
+                content_type HTML_SJIS
+                return error_response('視聴されていないホストからは書き込めません。').to_sjis!
+              end
+            end
           end
         end.()
+
+        proc do
+          id = Digest::MD5.base64digest(remote_addr)[0, 8]
+          if (@board.settings["BANNED_IDS"] || "").include?(id)
+            content_type HTML_SJIS
+            return error_response('ホスト規制により書き込めませんでした。').to_sjis!
+          end
+        end.()
+
+        post = nil
+        proc do
+          builder = PostBuilder.new(@board, thread, remote_addr)
+          from, mail, message = params.values_at('FROM', 'mail', 'MESSAGE')
+          if nodes.any?
+            vers = nodes.map { |n| n["versionString"] + extra_label(n) }.compact
+            if from&.empty?
+              from = vers.join(', ')
+            else
+              from = "#{from} (#{vers.join(', ')})"
+            end
+          end
+          post = builder.create_post(from, mail, message)
+        end.()
+
+        # NGワードチェック
+        if post.body.gsub(/[ -~]/, '') =~ NG_REGEXP
+          # content_type HTML_SJIS
+          # return error_response('その内容のメッセージは書き込めません。').to_sjis!
+
+          # 嘘つく
+          @head = "<meta http-equiv=\"refresh\" content=\"1; url=#{h back}\">"
+          @title = '書きこみました'
+
+          content_type HTML_SJIS
+          return erb(:posted).to_sjis!
+        end
 
         # ポートチェック
-        proc do
-          result = []
-          [ Thread.start { result << system("curl -I --connect-timeout 3 http://#{remote_addr}/") },
-            Thread.start { result << system("curl -I --connect-timeout 3 http://#{remote_addr}:8080/") },
-            Thread.start { result << system("curl -I --connect-timeout 3 https://#{remote_addr}/") } ].each do |t|
-            t.join
-          end
-          if result.any?
-            content_type HTML_SJIS
-            return error_response('特定のポートが空いているホストからは書き込めません。').to_sjis!
-          end
-        end.()
+        # proc do
+        #   result = []
+        #   [ Thread.start { result << system("curl -I --connect-timeout 3 http://#{remote_addr}/") },
+        #     Thread.start { result << system("curl -I --connect-timeout 3 http://#{remote_addr}:8080/") },
+        #     Thread.start { result << system("curl -I --connect-timeout 3 https://#{remote_addr}/") } ].each do |t|
+        #     t.join
+        #   end
+        #   if result.any?
+        #     content_type HTML_SJIS
+        #     return error_response('特定のポートが空いているホストからは書き込めません。').to_sjis!
+        #   end
+        # end.()
 
         # 逆引きチェック
-        begin
-          unless Resolv.getname(remote_addr) =~ /.jp\Z/
-            content_type HTML_SJIS
-            return error_response('jp').to_sjis!
-          end          
-        rescue Resolv::ResolvError
-          content_type HTML_SJIS
-          return error_response('逆引きチェック失敗。').to_sjis!
-        end
+        #begin
+        #  unless Resolv.getname(remote_addr) =~ /.jp\Z/
+        #    content_type HTML_SJIS
+        #    return error_response('jp').to_sjis!
+        #  end          
+        #rescue Resolv::ResolvError
+        #  content_type HTML_SJIS
+        #  return error_response('逆引きチェック失敗。').to_sjis!
+        #end
         
         if thread.posts.any? { |x| x.body == post.body }
           content_type HTML_SJIS
@@ -759,11 +854,25 @@ module Genkai
                 end
                 buf = erb(:ajax_timeline, layout: false)
               elsif format == "json"
+                f.seek(0, :SET)
+                start_no = f.read(lo).count("\n") + 1
+
+                @posts = []
+                buf.as_sjis!.to_utf8!.each_line.with_index(start_no) do |line, lineno|
+                  @posts << Post.from_line(line, lineno)
+                end
+                html = erb(:ajax_timeline, layout: false)
+
                 messages = []
-                buf.as_sjis!.to_utf8!.each_line do |line|
+                buf.each_line do |line|
                   messages << Post.from_line(line).body
                 end
-                buf = JSON.dump({ "messages" => messages, "dat_size" => size })
+                buf = JSON.dump({
+                                  "messages" => messages,
+                                  "dat_size" => size,
+                                  "thread_size" => start_no + messages.size - 1,
+                                  "html" => html
+                                })
               end
               return [206, # Partial Content
                       {
@@ -799,7 +908,16 @@ module Genkai
           thread.posts.each do |post|
             messages << post.body
           end
-          JSON.dump({ "messages" => messages, "dat_size" => thread.bytesize })
+
+          @posts = thread.posts
+          html = erb(:ajax_timeline, layout: false)
+
+          JSON.dump({
+                      "messages" => messages,
+                      "dat_size" => thread.bytesize,
+                      "thread_size" => thread.size,
+                      "html" => html
+                    })
         else
           send_file(dat_path(board, thread))
         end

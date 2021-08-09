@@ -6,10 +6,10 @@
   <li class="active"><%= h @thread.subject %></li>
 </ol>
 
-<div class="container">
+<div class="container" style="padding-left:5px; padding-right:5px>
   <h1>
     <a href="/test/read.cgi/<%= @board.id %>/<%= @thread.id %>"><%= h @thread.subject %></a>
-    <span class="badge"><%= @thread.size %></span>
+    <span id="thread_size" class="badge"><%= @thread.size %></span>
   </h1>
 
   <div class="form-group" style="text-align: right">
@@ -21,69 +21,255 @@
   </div>
 
 
-  <div id="timeline" style="margin: 20px 0px 20px 0px">
+  <div id="timeline" style="margin: 20px 0px 40px 0px">
     <% @posts.each do |post| %>
       <%= erb :post_media_object, locals: { post: post } %>
     <% end %>
   </div>
 
   <script>
-   var $dat_size = <%= @dat_size %>;
-   function getNewMessages() {
-       return new Promise((resolve, reject) => {
-           return $.ajax("/<%= @board.id %>/dat/<%= @thread.id %>.dat?long_polling=1&format=html",
-                         {
-                             headers: { Range: "bytes=" + $dat_size + "-" },
-                             cache: false,
-                             dataType: 'html',
-                             timeout: 120*1000,
-                             success(data, textStatus, jqXHR) {
-                                 resolve([data, textStatus, jqXHR]);
-                             },
-                             error(req, textStatus) {
-                                 reject([req, textStatus]);
-                             },
-           });
-       });
-   }
-   function delay(ms) {
-       return new Promise((resolve, _reject) => setTimeout(resolve, ms));
-   }
-   async function main() {
-       while (true) {
-           try {
-               var [data, textStatus, jqXHR] = await getNewMessages();
+    // クエリ文字列に webapi キーが指定された場合は speech.pcgw.pgw.jp の API を使う。
+    // そうでなければ ブラウザ組み込みの 音声読み上げを使う。
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('webapi') !== null)
+        window.speakDispatch = speakHttpApi;
+    else
+        window.speakDispatch = speakSpeechSynthesis;
 
-               $('#timeline').html($('#timeline').html() + data);
-               $("html, body").animate({ scrollTop: $(document).height() }, "slow");
-               var size = jqXHR.getResponseHeader("Content-Range").split("/")[1];
-               if (size) {
-                   $dat_size = +size;
-               } else {
-                   console.error("failed to parse Content-Range header");
-                   console.log(jqXHR.getResponseHeader("Content-Range"));
-               }
-           } catch ([req, textStatus]) {
-               if (textStatus == "timeout") {
-                   console.log("timeout");
-               } else {
-                   console.log(textStatus);
-                   await delay(10*1000);
-               }
-           }
-       }
-   }
-   main();
+    var $dat_size = 0;
+
+    var $queue = [];
+    async function getNewMessages() {
+        console.log("getNewMessages");
+        console.log("$dat_size = ", $dat_size);
+        return new Promise((resolve, reject) =>
+            $.ajax("/<%= @board.id %>/dat/<%= @thread.id %>.dat?long_polling=1&format=json",
+                   {
+                       headers: { Range: "bytes=" + $dat_size + "-" },
+                       cache: false,
+                       dataType: 'json',
+                       success: function(data, textStatus, jqXHR){
+                           resolve(data);
+                       },
+                       error: function(req, textStatus, errorThrown){
+                           console.log(textStatus, errorThrown);
+                           reject(textStatus);
+                       },
+                       timeout: 120*1000,
+            }));
+    }
+    async function showNextMessage() {
+        var message = $queue.shift();
+        $('#message').html(message);
+        var forSpeech = massage(message);
+        console.log("forSpeech", forSpeech);
+        await speakDispatch(forSpeech);
+        await delay(5000 / ($queue.length+1));
+        // ↑この式はケアが要る。
+        $('#message').html('');
+    }
+
+    function htmlUnescape(str) {
+        var textArea = document.createElement('textarea');
+        textArea.innerHTML = str;
+        return textArea.value;
+    }
+    function massage(text) { // もみもみ
+        // メッセージを読み上げに適した形に修正する。
+        text = text.replace(/ <br> /g, ' ');
+        text = text.replace(/h?ttps?:\/\/[A-Za-z0-9+\/~_\-.]+/g, "[URL]");
+        text = text.replace(/<a href="[^"]+">&gt;&gt;(\d+)<\/a>/g, (_, p1) => p1 + " ");
+        text = text.replace(/&#x?\d+;/g, ""); // 数値実体参照を全削除する。
+
+        // 繰り返しを省略する。
+        let oldlength = text.length;
+        while (true) {
+            text = text.replace(/(.+?)\1{3,}/g, (m, c1) => { /* console.log(c1); */ return c1; });
+            if (text.length === oldlength)
+                break;
+            else
+                oldlength = text.length;
+        }
+        
+        text = htmlUnescape(text);
+        return text;
+    }
+    function speakHttpApi(text) {
+        return new Promise(cont => {
+            var req = new XMLHttpRequest();
+            var params = `text=${encodeURI(text)}&format=ogg`;
+
+            req.open("POST", "http://speech.pcgw.pgw.jp/v1/tts", true);
+            req.responseType = 'blob';
+            req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+            req.addEventListener('load', ev => {
+                // レス着信音を鳴らして、500msのディレイの後にテキストの再生を始める。
+                var au = new Audio(URL.createObjectURL(req.response));
+                au.addEventListener("ended", _ => {
+                    cont();
+                });
+                var au2 = new Audio("/kiri2.wav");
+                au2.addEventListener("ended", _ => {
+                    au.play().catch(err => {
+                        console.log(err);
+                        cont();
+                    });
+                });
+                au2.play().catch(err => {
+                    console.log(err);
+                    cont();
+                });
+            });
+            req.addEventListener('error', ev => {
+                console.log(ev);
+                const au = new Audio('/failure.wav');
+                au.addEventListener("ended", _ => {
+                    cont();
+                });
+                au.play().catch(err => {
+                    console.log(err);
+                    cont();
+                });
+            });
+            req.send(params);
+        });
+    }
+    function speakSpeechSynthesis(text) {
+        return new Promise(cont => {
+            const synth = window.speechSynthesis;
+            var utter = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+            utter.lang = "ja";
+
+            var notify = new Audio("/kiri2.wav");
+            notify.addEventListener("ended", _ => {
+                utter.addEventListener("end", _ => {
+                    cont();
+                });
+                utter.addEventListener("error", ev => {
+                    console.log(ev);
+                    const au = new Audio('/failure.wav');
+                    au.addEventListener("ended", _ => {
+                        cont();
+                    });
+                    au.play().catch(err => {
+                        console.log(err);
+                        cont();
+                    });
+                });
+                synth.speak(utter)
+            });
+            notify.play().catch(err => {
+                console.log(err);
+                cont();
+            });
+        });
+    }
+    function showUnmuteButton() {
+        $(window.unmuteBtn).show();
+    }
+    $(function(){
+        // スクリプト主導の音声再生ができるかテストする。
+        $(window.unmuteBtn).hide();
+        new Audio("/enabled.wav").play().catch(err => {
+            $(window.unmuteBtn).show();
+        });
+        window.unmuteBtn.onclick = ev => {
+            new Audio("/enabled.wav").play().then(_ => {
+                $(window.unmuteBtn).hide();
+            });
+        };
+    });
+
+    function getInitialDatSize() {
+        return new Promise((resolve, reject) =>
+            $.ajax("/<%= @board.id %>/dat/<%= @thread.id %>.dat",
+                   {
+                       type: 'HEAD',
+                       cache: false,
+                       success: function(data, textStatus, jqXHR){
+                           console.log('$dat_size =', jqXHR.getResponseHeader('Content-Length'));
+                           $dat_size = +jqXHR.getResponseHeader('Content-Length');
+                           resolve($dat_size);
+                       },
+                       error: function(req, textStatus){
+                           reject(textStatus);
+                       },
+                       timeout: 5*1000,
+            }));
+    }
+
+    function delay(ms) {
+        return new Promise((resolve, _reject) => setTimeout(resolve, ms));
+    }
+
+    async function main() {
+        while (true) {
+            try {
+                // with $dat_size = 0
+                var data = await getNewMessages();
+                console.log("got data", data);
+                $('#timeline').html(data.html); // replace all
+                $dat_size = data.dat_size;
+                $('#thread_size').text(data.thread_size);
+                break;
+            } catch (textStatus) {
+                if (textStatus == "timeout") {
+                    console.log("timeout");
+                } else {
+                    console.log(textStatus);
+                    await delay(10*1000);
+                }
+            }
+        }
+        console.log("initial load done");
+
+        while (true) {
+            while (true) {
+                try {
+                    var data = await getNewMessages();
+                    console.log(data.messages);
+
+                    $queue = $queue.concat(data.messages);
+                    $dat_size = data.dat_size;
+
+                    $('#timeline').html($('#timeline').html() + data.html);
+                    $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+
+                    $('#thread_size').text(data.thread_size);
+
+                    break;
+                } catch(textStatus) {
+                    if (textStatus !== "timeout") {
+                        await delay(5*1000);
+                    }
+                }
+            }
+
+            while ($queue.length) {
+                await showNextMessage();
+            }
+        }
+    }
+    main();
   </script>
 
-  <div class="form-group" style="text-align: right; position: fixed; bottom: 2em; right: 2em">
+  <script>
+    $(function(){
+      $('a.do-nothing').click(function(ev){
+        ev.preventDefault();
+      });
+    });
+  </script>
+
+  <div class="form-group" style="text-align: right; position: fixed; bottom: 0em; right: 2em; margin-bottom:5px">
+    <button id="unmuteBtn" class="btn btn-default" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">&#x1F4E2;<!-- loudspeaker -->ミュート解除</button>
     <a class="btn btn-default" href="#bottom" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
       <span class="glyphicon glyphicon-arrow-down" style="text-decoration: underline; text-decoration-thickness: 3px"></span>
-      下に行く
     </a>
     <a class="btn btn-default" href="#top" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
       <span class="glyphicon glyphicon-arrow-up" style="text-decoration: overline; text-decoration-thickness: 3px"></span>
-      上に戻る
     </a>
     <button class="btn btn-primary" data-toggle="modal" data-target="#post_dialog" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
       <span class="glyphicon glyphicon-pencil"></span>&thinsp;カキコ...
