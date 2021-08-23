@@ -229,6 +229,10 @@ module Genkai
 
       nposts = @thread.posts.size
 
+      unless params['post_numbers']
+        halt 400, "post_numbers"
+      end
+
       params['post_numbers'].map(&:to_i).each do |res_no|
         halt(400, 'range error') unless res_no.between?(1, nposts)
 
