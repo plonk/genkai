@@ -731,7 +731,7 @@ p channels
       @dat_size = @thread.bytesize
 
       content_type HTML_SJIS
-      erb(:timeline).to_sjis!
+      erb(:timeline, locals: { speech_enabled_js: 'false' }).to_sjis!
     end
 
     get '/test/read.cgi/:board/:sure' do |board, sure|
@@ -744,7 +744,7 @@ p channels
       @dat_size = @thread.bytesize
 
       content_type HTML_SJIS
-      erb(:timeline).to_sjis!
+      erb(:timeline, locals: { speech_enabled_js: 'true' }).to_sjis!
     end
 
     # ------- 板ディレクトリ ----------
