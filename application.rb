@@ -705,7 +705,7 @@ p channels
       require_first_post = false
       case cmd
       when /^l(\d+)$/
-        @posts = all_posts.last(3)
+        @posts = all_posts.last($1.to_i)
         require_first_post = true
       when /^(\d+)-(\d+)$/
         @posts = all_posts[($1.to_i - 1)..($2.to_i - 1)]
