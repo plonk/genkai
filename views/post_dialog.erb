@@ -8,7 +8,7 @@
         <h4 class="modal-title"><%= h @thread.subject %>に書き込み</h4>
       </div>
 
-      <form class="form" action="/test/bbs.cgi" method="POST" onsubmit="submitHook()">
+      <form id="post_form" class="form" action="/test/bbs.cgi" method="POST">
         <div class="modal-body">
           <div class="form-group">
             <label class="control-label">
@@ -40,7 +40,10 @@
   </div>
 </div>
 <script>
- function submitHook(){
+ async function submitHook(event){
+     event.preventDefault();
+
+     // ローカルストレージに名前とメールを保存する。
      if ($('#remember')[0].checked) {
          localStorage.setItem('name', $('input[name=mail]')[0].value);
          localStorage.setItem('FROM', $('input[name=FROM]')[0].value);
@@ -48,14 +51,40 @@
          localStorage.removeItem('name');
          localStorage.removeItem('FROM');
      }
- }
- $(function(){
-     if (localStorage.name || localStorage.FROM) {
-         $('#remember')[0].checked = true;
-         $('input[name=mail]')[0].value = localStorage.getItem('name');
-         $('input[name=FROM]')[0].value = localStorage.getItem('FROM');
+
+     const fd = new FormData()
+     //FROM mail MESSAGE bbs key submit
+     fd.set('FROM', $('input[name=FROM]')[0].value)
+     fd.set('mail', $('input[name=mail]')[0].value)
+     fd.set('MESSAGE', $('textarea[name=MESSAGE]')[0].value)
+     fd.set('bbs', $('input[name=bbs]')[0].value)
+     fd.set('key', $('input[name=key]')[0].value)
+     fd.set('submit', $('input[name=submit]')[0].value)
+
+     const res = await fetch('/test/bbs.cgi', { method: 'POST', body: fd })
+     if (res.status == 200) {
+         $('form#post_form')[0].reset()
+         $('#post_dialog').modal('hide')
      } else {
-         $('#remember')[0].checked = false;
+         const text = await res.text()
+         alert(text)
      }
+ }
+
+ $(function(){
+     $('#post_dialog').on('show.bs.modal', function(){
+         // ローカルストレージから名前とメールを復元する。
+         if (localStorage.name || localStorage.FROM) {
+             $('#remember')[0].checked = true;
+             $('input[name=mail]')[0].value = localStorage.getItem('name');
+             $('input[name=FROM]')[0].value = localStorage.getItem('FROM');
+         } else {
+             $('#remember')[0].checked = false;
+         }
+     }).on('shown.bs.modal', function(){
+         $('textarea[name=MESSAGE]').focus()
+     })
+
+     $('form#post_form').on('submit', submitHook)
  });
 </script>

@@ -394,10 +394,33 @@ module Genkai
     end
 
     post '/test/bbs.cgi' do
-      mode = params['submit'].as_sjis.to_utf8
+      begin
+        convert_params_to_utf8!
+      rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
+        # たぶん params はすでに UTF-8 だった。
+        esc_nonjis = proc do |s|
+          s
+            .encode('CP932', fallback: proc { |s| "&##{s.ord.to_s};" })
+            .encode('UTF-8')
+        end
+        new_params = params.each_pair.map { |key, value|
+          [
+            esc_nonjis.(key),
+            value.is_a?(Array) ? value.map(&esc_nonjis) : esc_nonjis.(value)
+          ]
+        }.to_h
+        params.replace(new_params)
+      end
+
+      mode = params['submit']
       case mode
       when '書き込む'
-        post_message
+        begin
+          post_message
+        rescue => e # halt は rescue されない。
+          content_type HTML_SJIS
+          return error_response(e.message).to_sjis!
+        end
       when '新規スレッド作成'
         # halt 403, 'unimplemented'
         board = params['bbs']
@@ -470,7 +493,6 @@ module Genkai
     # mail: メールアドレス
     # MESSAGE: 本文
     def post_message
-      convert_params_to_utf8!
       check_non_blank!('key', 'MESSAGE')
 
 puts '--post message--'
@@ -478,22 +500,19 @@ p env
 p params
 
       if params['MESSAGE'].size > 140
-        content_type HTML_SJIS
-        return error_response('文字数が多すぎて投稿できません。').to_sjis!
+        fail '文字数が多すぎて投稿できません。'
       end
       
       @@post_lock.synchronize do
 
         thread = ThreadFile.new(dat_path(params['bbs'], params['key']))
         if thread.size >= 1000
-          content_type HTML_SJIS
-          return error_response('スレッドストップです。').to_sjis!
+          fail 'スレッドストップです。'
         end
 
         # 存在しないスレッドに書き込もうとしている。
         if thread.size == 0
-          content_type HTML_SJIS
-          return error_response('スレッドがありません。').to_sjis!
+          fail 'スレッドがありません。'
         end
 
         remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
@@ -505,20 +524,33 @@ p params
             peercast = Peercast.new('localhost', port)
             channels = peercast.getChannels
 p channels
-            ch = channels.find { |i| i['info']['name'] =~ /流刑地/ }
+            ch = channels.find { |i| i['status']['isBroadcasting'] }
             chid = nil
             network = nil
             if ch
               chid = ch['channelId']
               network = ch['status']['network'] || 'ipv4'
+            else
+              next
             end
             if chid && network == "ipv4"
               trees = peercast.getChannelRelayTree(chid)
               if (nodes += find_node(trees, remote_addr)).any?
                 break
               else
-                content_type HTML_SJIS
-                return error_response('視聴されていないホストからは書き込めません。').to_sjis!
+                board = params['bbs']
+                auth = Rack::Auth::Basic::Request.new(request.env)
+                unless authentic?(auth)
+                  # 板ごとの認証
+                  key = "PASSWORD_#{board}"
+                  unless @site_settings[key] != nil &&
+                         auth.provided? && auth.basic? && auth.credentials == [board, @site_settings[key]]
+                    response['WWW-Authenticate'] = 'Basic realm="Admin area"'
+                    content_type HTML_SJIS
+                    halt 401, '視聴されていないホストからは書き込めません。'.to_sjis
+                  end
+                end
+                break
               end
             end
           end
@@ -527,8 +559,7 @@ p channels
         proc do
           id = Digest::MD5.base64digest(remote_addr)[0, 8]
           if (@board.settings["BANNED_IDS"] || "").include?(id)
-            content_type HTML_SJIS
-            return error_response('ホスト規制により書き込めませんでした。').to_sjis!
+            fail 'ホスト規制により書き込めませんでした。'
           end
         end.()
 
@@ -575,19 +606,18 @@ p channels
         # end.()
 
         # 逆引きチェック
-        #begin
-        #  unless Resolv.getname(remote_addr) =~ /.jp\Z/
-        #    content_type HTML_SJIS
-        #    return error_response('jp').to_sjis!
-        #  end          
-        #rescue Resolv::ResolvError
-        #  content_type HTML_SJIS
-        #  return error_response('逆引きチェック失敗。').to_sjis!
-        #end
+        begin
+          remote_host = Resolv.getname(remote_addr)
+        rescue Resolv::ResolvError
+          fail '逆引きチェック失敗。'
+        end
+        # jpドメインチェック
+        unless remote_host =~ /.jp\Z/
+          fail 'jp'
+        end          
         
         if thread.posts.any? { |x| x.body == post.body }
-          content_type HTML_SJIS
-          return error_response('重複する内容は書き込めません。').to_sjis!
+          fail '重複する内容は書き込めません。'
         end
         
         thread.posts << post
@@ -637,7 +667,6 @@ p channels
     # mail: メールアドレス
     # MESSAGE: 本文
     def create_thread
-      convert_params_to_utf8!
       check_non_blank!('subject', 'MESSAGE')
 
       begin
