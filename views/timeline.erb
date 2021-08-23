@@ -28,6 +28,19 @@
   </div>
 
   <script>
+    function ban(id) {
+        if (confirm(`${id} をBANしますか？`)) {
+            fetch(`/admin/boards/<%= @board.id %>/ban?id=${encodeURIComponent(id)}`)
+                .then(res => {
+                    if (res.status != 200) {
+                        alert(`${res.status} エラー`);
+                    }
+                });
+        }
+    }
+  </script>
+
+  <script>
     // クエリ文字列に webapi キーが指定された場合は speech.pcgw.pgw.jp の API を使う。
     // そうでなければ ブラウザ組み込みの 音声読み上げを使う。
     const params = new URLSearchParams(window.location.search)

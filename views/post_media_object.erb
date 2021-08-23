@@ -11,7 +11,7 @@
                 <% end %>
                 <%= h post.date_proper %>
                 <% if post.id %>
-                    <a href="/admin/boards/<%= @board.id %>/ban?id=<%= Rack::Utils.escape(post.id) %>">ID:<%= h post.id %></a>
+                    <a onclick="ban('<%= h post.id %>')">ID:<%= h post.id %></a>
                 <% end %>
             </h4>
             <div class="nichan-message"><%= post.body %></div>
