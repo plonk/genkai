@@ -1,4 +1,31 @@
-<a name="top"></a>
+<script>
+ function scrollToBottom(ev) {
+     //$(window).scrollTop($(document).height() - $(window).height())
+     const top = $(document).height() - $(window).height()
+     $("html, body").animate({ scrollTop: top }, 600)
+ }
+
+ function scrollToTop(ev) {
+     //$(window).scrollTop(0)
+     $("html, body").animate({ scrollTop: 0 }, 600)
+ }
+</script>
+
+<div class="form-group" style="text-align: right; position: fixed; bottom: 0em; right: 2em; margin-bottom:5px">
+  <button id="unmuteBtn" class="btn btn-default" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">&#x1F4E2;<!-- loudspeaker -->ミュート解除</button>
+
+  <button class="btn btn-default" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);" onclick="scrollToBottom()">
+    <span class="glyphicon glyphicon-arrow-down" style="text-decoration: underline; text-decoration-thickness: 3px"></span>
+  </button>
+
+  <button class="btn btn-default" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);" onclick="scrollToTop()">
+    <span class="glyphicon glyphicon-arrow-up" style="text-decoration: overline; text-decoration-thickness: 3px"></span>
+  </button>
+
+  <button class="btn btn-primary" data-toggle="modal" data-target="#post_dialog" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
+    <span class="glyphicon glyphicon-pencil"></span>&thinsp;カキコ...
+  </button>
+</div>
 
 <ol class="breadcrumb">
   <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a></li>
@@ -275,21 +302,5 @@
       });
     });
   </script>
-
-  <div class="form-group" style="text-align: right; position: fixed; bottom: 0em; right: 2em; margin-bottom:5px">
-    <button id="unmuteBtn" class="btn btn-default" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">&#x1F4E2;<!-- loudspeaker -->ミュート解除</button>
-    <a class="btn btn-default" href="#bottom" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
-      <span class="glyphicon glyphicon-arrow-down" style="text-decoration: underline; text-decoration-thickness: 3px"></span>
-    </a>
-    <a class="btn btn-default" href="#top" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
-      <span class="glyphicon glyphicon-arrow-up" style="text-decoration: overline; text-decoration-thickness: 3px"></span>
-    </a>
-    <button class="btn btn-primary" data-toggle="modal" data-target="#post_dialog" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">
-      <span class="glyphicon glyphicon-pencil"></span>&thinsp;カキコ...
-    </button>
-  </div>
-
-  <a name="bottom"></a>
-
   <%= erb :post_dialog %>
 </div>
