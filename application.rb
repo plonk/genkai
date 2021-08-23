@@ -894,7 +894,7 @@ p channels
                 buf.as_sjis!.to_utf8!.each_line.with_index(start_no) do |line, lineno|
                   @posts << Post.from_line(line, lineno)
                 end
-                html = erb(:ajax_timeline, layout: false)
+                html = erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })
 
                 messages = []
                 buf.each_line do |line|

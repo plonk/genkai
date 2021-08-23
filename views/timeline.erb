@@ -50,7 +50,7 @@
 
   <div id="timeline" style="margin: 20px 0px 40px 0px">
     <% @posts.each do |post| %>
-      <%= erb :post_media_object, locals: { post: post } %>
+      <%= erb :post_media_object, locals: { post: post, board: @board.id, thread: @thread.id } %>
     <% end %>
   </div>
 
