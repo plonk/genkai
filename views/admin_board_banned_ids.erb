@@ -17,7 +17,10 @@
 
   <ul>
     <% ids.each do |id| %>
-      <li><%= id %> <a href="/admin/boards/<%= @board.id %>/unban?id=<%= Rack::Utils.escape(id) %>">unban</a></li>  
+      <li>
+        <a href="http://sns.pcgw.pgw.jp/u/<%= id.gsub('/','~') %>" style="font-family:monospace"><%= id %></a>
+        <a href="/admin/boards/<%= @board.id %>/unban?id=<%= Rack::Utils.escape(id) %>">unban</a>
+      </li>  
     <% end %>
   </ul>
 </div>

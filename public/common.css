@@ -5,8 +5,9 @@ footer {
 }
 
 .media {
-    padding: 10px;
     margin: 0;
+    padding: 5px 0 5px 0;
+    border-top: solid 2px #eee;
 }
 
 .monospace {
@@ -29,4 +30,44 @@ footer {
 /* テキストエリアのスクロールバーを消す */
 .no-resize {
     resize: none;
+}
+
+:root { color-scheme: light dark }
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #111;
+        color: #fff;
+        margin-top: 1px;
+    }
+    .text-muted { color: #aaa }
+    a, a:hover { color: #dd0 }
+
+    .breadcrumb {
+        background-color: inherit;
+        border: 2px solid #f0f;
+    }
+
+    .panel { background-color: inherit }
+
+    .media {
+        border-top-color: #0a0;
+    }
+
+    .btn-default, .btn-default:active, .btn-default:hover, .btn-default:focus {
+        text-shadow: none;
+        background-image: none;
+        background-color: #111;
+        color: white;
+        border-width: 2px;
+    }
+
+    .btn-primary { background-image: none; }
+
+    .modal-content { background-color: #222 }
+    .modal-header { border-bottom-color: #555 }
+    .modal-footer { border-top-color: #555 }
+
+    .form-control { color: #fff; background-color: #444 }
+
+    .close, .close:focus, .close:hover { color: #fff }
 }

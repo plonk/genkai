@@ -639,15 +639,7 @@ p channels
 
         # NGワードチェック
         if post.body.gsub(/[ -~]/, '') =~ NG_REGEXP
-          # content_type HTML_SJIS
-          # return error_response('その内容のメッセージは書き込めません。').to_sjis!
-
-          # 嘘つく
-          @head = "<meta http-equiv=\"refresh\" content=\"1; url=#{h back}\">"
-          @title = '書きこみました'
-
-          content_type HTML_SJIS
-          return erb(:posted).to_sjis!
+          fail 'その内容のメッセージは書き込めません。'
         end
 
         # ポートチェック
@@ -664,19 +656,19 @@ p channels
         #   end
         # end.()
 
-        # 逆引きチェック
-        begin
-          remote_host = Resolv.getname(remote_addr)
-        rescue Resolv::ResolvError
-          fail '逆引きチェック失敗。'
-        end
-        # jpドメインチェック
-        unless remote_host =~ /.jp\Z/
-          fail 'jp'
-        end          
+        # # 逆引きチェック
+        # begin
+        #   remote_host = Resolv.getname(remote_addr)
+        # rescue Resolv::ResolvError
+        #   fail '逆引きチェック失敗。'
+        # end
+        # # jpドメインチェック
+        # unless remote_host =~ /(\.jp|\.bbtec\.net)\Z/
+        #   fail 'ドメイン規制により書き込めません。'
+        # end          
         
-        if thread.posts.any? { |x| x.body == post.body }
-          fail '重複する内容は書き込めません。'
+        if thread.posts.last(25).any? { |x| x.body == post.body }
+          fail '最近のレスと重複する内容は書き込めません。'
         end
         
         thread.posts << post
@@ -870,8 +862,14 @@ p channels
     end
 
     get '/:board/SETTING.TXT' do |board|
-      headers["Content-Type"] = PLAIN_SJIS
-      send_file(board_path(board) / "SETTING.TXT")
+      if params[:format] == 'json'
+        lines = File.read(board_path(board) / "SETTING.TXT", encoding: 'CP932').encode('UTF-8').lines.map(&:chomp)
+        object = lines.map { |ln| ln.split('=',2) }.to_h
+        return 200, { 'Content-Type' => 'application/json' }, JSON.dump(object)
+      else
+        headers["Content-Type"] = PLAIN_SJIS
+        send_file(board_path(board) / "SETTING.TXT")
+      end
     end
 
     get '/:board/1000.txt' do |board|
@@ -948,7 +946,7 @@ p channels
                 buf.as_sjis!.to_utf8!.each_line.with_index(start_no) do |line, lineno|
                   @posts << Post.from_line(line, lineno)
                 end
-                buf = erb(:ajax_timeline, layout: false)
+                buf = erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })
               elsif format == "json"
                 f.seek(0, :SET)
                 start_no = f.read(lo).count("\n") + 1
@@ -996,17 +994,17 @@ p channels
         end
       else
         if format == "html"
-          @posts = ThreadFile.new(board, thread).posts
-          erb(:ajax_timeline, layout: false)
+          @posts = ThreadFile.new(dat_path(board, thread)).posts
+          erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })
         elsif format == "json"
           messages = []
-          thread = ThreadFile.new(board, thread)
+          thread = ThreadFile.new(dat_path(board, thread))
           thread.posts.each do |post|
             messages << post.body
           end
 
           @posts = thread.posts
-          html = erb(:ajax_timeline, layout: false)
+          html = erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })
 
           JSON.dump({
                       "messages" => messages,

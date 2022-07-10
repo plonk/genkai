@@ -25,12 +25,16 @@
     <div class="panel-heading">
       <h4>スレッド一覧</h4>
     </div>
-    <div class="list-group">
-      <% @threads.each.with_index do |thread| %>
-        <a class="list-group-item" href="/test/read.cgi/<%= @board.id + '/' + thread.id %>">
-          <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.size %></span></a>
-      <% end %>
-    </div>
+    <% if @threads.empty? %>
+      <div class="panel-body text-warning">スレッドはありません。</div>
+    <% else %>
+      <div class="list-group">
+        <% @threads.each.with_index do |thread| %>
+          <a class="list-group-item" href="/test/read.cgi/<%= @board.id + '/' + thread.id %>">
+            <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.size %></span></a>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 
   <div class="modal fade" id="create_thread_dialog">

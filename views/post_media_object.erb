@@ -1,4 +1,4 @@
-<div class="media" style="padding: 5px 0 5px 0; border-top: solid 2px #eee">
+<div class="media">
     <div class="media-left">
     </div>
     <div class="media-body">
@@ -11,7 +11,7 @@
                 <% end %>
                 <%= h post.date_proper %>
                 <% if post.id %>
-                    <a onclick="ban('<%= h post.id %>')">ID:<%= h post.id %></a>
+                    <a style="font-family:monospace" onclick="$id_dialog_params = { id: <%= h post.id.inspect %> }; $('#id_dialog').modal()">ID:<%= h post.id %></a>
                 <% end %>
             </h4>
             <div class="nichan-message"><%= post.body %></div>

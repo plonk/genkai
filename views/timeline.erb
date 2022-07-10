@@ -12,7 +12,7 @@
 </script>
 
 <div class="form-group" style="text-align: right; position: fixed; bottom: 0em; right: 2em; margin-bottom:5px">
-  <button id="unmuteBtn" class="btn btn-default" style="visibility: hidden; box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">&#x1F4E2;<!-- loudspeaker -->ミュート解除</button>
+  <button id="unmuteBtn" class="btn btn-default" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">&#x1F4E2;<!-- loudspeaker -->ミュート解除</button>
 
   <button class="btn btn-default" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);" onclick="scrollToBottom()">
     <span class="glyphicon glyphicon-arrow-down" style="text-decoration: underline; text-decoration-thickness: 3px"></span>
@@ -221,11 +221,12 @@
         $(window.unmuteBtn).show();
     }
     $(function(){
+        $(window.unmuteBtn).hide();
+
         if (!<%= speech_enabled_js %>)
             return
 
         // スクリプト主導の音声再生ができるかテストする。
-        $(window.unmuteBtn).hide();
         new Audio("/enabled.wav").play().catch(err => {
             $(window.unmuteBtn).show();
         });
@@ -306,16 +307,18 @@
             }
         }
     }
+
+   if (<%= speech_enabled_js %>)
+       main();
   </script>
 
   <script>
+   // post_media_object.erb で使う。
     $(function(){
       $('a.do-nothing').click(function(ev){
         ev.preventDefault();
       });
     });
-   if (<%= speech_enabled_js %>)
-       main();
   </script>
 
   <%= erb :post_dialog %>
