@@ -104,6 +104,28 @@ module Genkai
 
     before do
       @site_settings = @@site_settings
+
+      remote_addr = env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR']
+      # 逆引きチェック
+      begin
+        remote_host = Resolv.getname(remote_addr)
+      rescue Resolv::ResolvError
+        halt 403, 'IPアドレスが逆引きできないため利用できません。'
+      end
+#      begin
+#        unless Resolv.getaddresses(remote_host).include?(remote_addr)
+#          halt 403, 'IPアドレス逆引きの結果が齟齬するため利用できません。'
+#        end
+#      rescue Resolv::ResolvError
+#        halt 403, 'IPアドレスの逆引きの結果が正引きできないため利用できません。'
+#      end
+      # jpドメインチェック
+      unless remote_host =~ /(\.jp|\.bbtec\.net|\.21company\.com)\Z/
+        halt 403, 'ドメイン規制により利用できません。'
+      end          
+      if remote_host =~ /(\.au-net\.ne\.jp)\Z/
+        halt 403, 'ドメイン規制により利用できません。'
+      end          
     end
 
     # -------- 鯖トップ -------
