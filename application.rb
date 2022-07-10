@@ -91,6 +91,10 @@ module Genkai
         end.to_h
         params.replace(new_params)
       end
+
+      def unescape_body(str)
+        StringHelpers.unescape_field(str.gsub(/<\/?a[^>]*>/, '').gsub(' <br> ', "\n").gsub(/^ | $/, ''))
+      end
     end
 
     @@site_settings = SettingsFile.new('SETTING.TXT')
@@ -639,7 +643,7 @@ p channels
             builder = PostBuilder.new(@board, next_thread, 'localhost')
             post = builder.create_post('システム',
                                        'age', # 次スレはageる。
-                                       thread.posts[0].body,
+                                       unescape_body(thread.posts[0].body),
                                        subject)
             next_thread.posts << post
             next_thread.save
