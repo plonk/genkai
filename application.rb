@@ -701,6 +701,10 @@ p channels
 
     # ---------- read.cgi -----------
 
+    get '/test/read.cgi/:board/?' do |board|
+      redirect to("/#{board}/")
+    end
+
     before '/test/read.cgi/:board/:sure/?*' do |board, sure, _rest|
       @board = Board.new(board_path(board))
       @thread = @board.find_thread(sure)
