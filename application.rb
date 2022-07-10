@@ -418,8 +418,14 @@ module Genkai
         begin
           post_message
         rescue => e # halt は rescue されない。
-          content_type HTML_SJIS
-          return error_response(e.message).to_sjis!
+          puts e.message
+          if params[:charset]&.upcase == "UTF-8"
+            content_type "text/html; charset=UTF-8"
+            return error_response(e.message)
+          else
+            content_type HTML_SJIS
+            return error_response(e.message).to_sjis!
+          end
         end
       when '新規スレッド作成'
         # halt 403, 'unimplemented'

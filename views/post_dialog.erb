@@ -61,10 +61,19 @@
      fd.set('key', $('input[name=key]')[0].value)
      fd.set('submit', $('input[name=submit]')[0].value)
 
-     const res = await fetch('/test/bbs.cgi', { method: 'POST', body: fd })
+     const res = await fetch('/test/bbs.cgi?charset=utf-8', { method: 'POST', body: fd })
      if (res.status == 200) {
-         $('form#post_form')[0].reset()
-         $('#post_dialog').modal('hide')
+         const html = await res.text();
+         console.log(html)
+         if (/ＥＲＲＯＲ/.exec(html)) {
+             const msg = $($.parseHTML(html)).text()
+             const trimmed = msg.replace(/\r/g, '')
+                                .split(/\n/).map(ln => ln.trim()).filter(ln => ln!='').join("\n")
+             alert(trimmed);
+         } else {
+             $('form#post_form')[0].reset()
+             $('#post_dialog').modal('hide')
+         }
      } else {
          const text = await res.text()
          alert(text)
