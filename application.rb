@@ -651,7 +651,7 @@ p channels
 
           # 1001 追加。
           body = @board.thread_stop_message + "\n次スレ: #{subject}"
-          PostBuilder.new(@board, thread, 'localhost')
+          builder = PostBuilder.new(@board, thread, 'localhost')
           post = builder.create_post('システム',
                                      'sage', 
                                      body)
