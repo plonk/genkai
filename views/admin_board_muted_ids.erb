@@ -1,0 +1,26 @@
+<ol class="breadcrumb">
+  <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a></li>
+  <li><a href="/<%= @board.id %>/"><%= h @board.title %></a> (設定)</li>
+</ol>
+
+<div class="container">
+  <%= erb :admin_board_tabs, locals: { index: 4 } %>
+
+  <div>
+    <form action="/admin/boards/<%= @board.id %>/mute" method=GET>
+      <input type="text" name="id">
+      <input type="submit" value="IDを追加">
+    </form>
+  </div>
+  
+  <h3><%= ids.size %> 個のミュートされたID</h3>
+
+  <ul>
+    <% ids.each do |id| %>
+      <li>
+        <a href="http://sns.pcgw.pgw.jp/u/<%= id.gsub('/','~') %>" style="font-family:monospace"><%= id %></a>
+        <a href="/admin/boards/<%= @board.id %>/unmute?id=<%= Rack::Utils.escape(id) %>">unmute</a>
+      </li>  
+    <% end %>
+  </ul>
+</div>

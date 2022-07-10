@@ -56,14 +56,25 @@
 
   <script>
     function ban(id) {
-        if (confirm(`${id} をBANしますか？`)) {
-            fetch(`/admin/boards/<%= @board.id %>/ban?id=${encodeURIComponent(id)}`)
-                .then(res => {
-                    if (res.status != 200) {
-                        alert(`${res.status} エラー`);
-                    }
-                });
-        }
+        if (!confirm(`${id} をBANしますか？`))
+            return
+
+        fetch(`/admin/boards/<%= @board.id %>/ban?id=${encodeURIComponent(id)}`)
+            .then(res => {
+                // 成功するとリダイレクトバックされて 200 が返る。
+                if (res.status != 200) {
+                    alert(`${res.status} エラー`);
+                }
+            });
+    }
+    function mute(id) {
+        fetch(`/admin/boards/<%= @board.id %>/mute?id=${encodeURIComponent(id)}`)
+            .then(res => {
+                // 成功するとリダイレクトバックされて 200 が返る。
+                if (res.status != 200) {
+                    alert(`${res.status} エラー`);
+                }
+            });
     }
   </script>
 
@@ -308,4 +319,5 @@
   </script>
 
   <%= erb :post_dialog %>
+  <%= erb :id_dialog %>
 </div>

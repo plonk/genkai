@@ -9,6 +9,7 @@ require_relative 'authentication_information'
 require 'time' # for Time.httpdate, Time#httpdate
 require_relative 'peercast'
 require 'resolv'
+require_relative 'string_helpers'
 
 module Genkai
   # Genkaiアプリケーション。
@@ -90,6 +91,10 @@ module Genkai
           [key.as_sjis.to_utf8, new_value]
         end.to_h
         params.replace(new_params)
+      end
+
+      def valid_user_id?(str)
+        !!(str =~ %r(\A[0-9A-Za-z+\/]{8}\z))
       end
 
       def unescape_body(str)
@@ -233,8 +238,30 @@ module Genkai
       redirect back
     end
 
+    get '/admin/boards/:board/mute' do
+      halt 400, "Invalid ID" unless validate_id(params['id'])
+      ids = (@board.settings["MUTED_IDS"] || "").split
+      ids = ids | [params['id']] # union
+      @board.settings["MUTED_IDS"] = ids.join(' ')
+      @board.settings.save
+      redirect back
+    end
+
+    get '/admin/boards/:board/unmute' do
+      halt 400, "Invalid ID" unless validate_id(params['id'])
+      ids = (@board.settings["MUTED_IDS"] || "").split
+      ids = ids - [params['id']] # difference
+      @board.settings["MUTED_IDS"] = ids.join(' ')
+      @board.settings.save
+      redirect back
+    end
+
     get '/admin/boards/:board/banned-ids' do
       erb :admin_board_banned_ids, locals: { ids: (@board.settings["BANNED_IDS"] || "").split }
+    end
+
+    get '/admin/boards/:board/muted-ids' do
+      erb :admin_board_muted_ids, locals: { ids: (@board.settings["MUTED_IDS"] || "").split }
     end
 
     # スレの編集。削除するレスの選択。
