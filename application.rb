@@ -505,7 +505,7 @@ puts '--post message--'
 p env
 p params
 
-      if params['MESSAGE'].size > 140
+      if params['MESSAGE'].size > 300
         fail '文字数が多すぎて投稿できません。'
       end
       
