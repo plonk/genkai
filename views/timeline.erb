@@ -110,14 +110,15 @@
             }));
     }
     async function showNextMessage() {
-        var message = $queue.shift();
-        $('#message').html(message);
-        var forSpeech = massage(message);
-        console.log("forSpeech", forSpeech);
-        await speakDispatch(forSpeech);
-        await delay(5000 / ($queue.length+1));
-        // ↑この式はケアが要る。
-        $('#message').html('');
+        var post = $queue.shift();
+        if (post.subject !== "muted") {
+            var forSpeech = massage(post.body);
+            await speakDispatch(forSpeech);
+            await delay(5000 / ($queue.length+1));
+            // ↑この式はケアが要る。
+        } else {
+            console.info("muted message skipped")
+        }
     }
 
     function htmlUnescape(str) {
@@ -284,9 +285,9 @@
             while (true) {
                 try {
                     var data = await getNewMessages();
-                    console.log(data.messages);
+                    console.log(data.posts);
 
-                    $queue = $queue.concat(data.messages);
+                    $queue = $queue.concat(data.posts);
                     $dat_size = data.dat_size;
 
                     $('#timeline').html($('#timeline').html() + data.html);

@@ -1,4 +1,7 @@
 # frozen_string_literal: true
+
+require 'json'
+
 module Genkai
   # DATファイルの一行で表わされるレスを表わすクラス。
   class Post
@@ -9,8 +12,8 @@ module Genkai
     end
 
     attr :number
-    attr_accessor :date
-    attr_reader :name, :mail, :body, :subject
+    attr_accessor :date, :subject
+    attr_reader :name, :mail, :body
 
     def initialize(name, mail, date, body, subject, number = nil)
       @name = name
@@ -32,6 +35,10 @@ module Genkai
 
     def date_proper
       date.sub(%r{ ID:[A-Za-z0-9+/]+}, '')
+    end
+
+    def to_json
+      { name: name, mail: mail, date: date, body: body, subject: subject, number: number }
     end
   end
 end

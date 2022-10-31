@@ -637,6 +637,13 @@ p channels
           post = builder.create_post(from, mail, message)
         end.()
 
+        proc do
+          id = Digest::MD5.base64digest(remote_addr)[0, 8]
+          if (@board.settings["MUTED_IDS"] || "").include?(id)
+            post.subject = 'muted'
+          end
+        end.()
+
         # NGワードチェック
         if post.body.gsub(/[ -~]/, '') =~ NG_REGEXP
           fail 'その内容のメッセージは書き込めません。'
@@ -957,14 +964,14 @@ p channels
                 end
                 html = erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })
 
-                messages = []
+                posts = []
                 buf.each_line do |line|
-                  messages << Post.from_line(line).body
+                  posts << Post.from_line(line).to_json
                 end
                 buf = JSON.dump({
-                                  "messages" => messages,
+                                  "posts" => posts,
                                   "dat_size" => size,
-                                  "thread_size" => start_no + messages.size - 1,
+                                  "thread_size" => start_no + posts.size - 1,
                                   "html" => html
                                 })
               end
@@ -997,17 +1004,15 @@ p channels
           @posts = ThreadFile.new(dat_path(board, thread)).posts
           erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })
         elsif format == "json"
-          messages = []
+          posts = []
           thread = ThreadFile.new(dat_path(board, thread))
-          thread.posts.each do |post|
-            messages << post.body
-          end
+          posts = thread.posts.map(&:to_json)
 
           @posts = thread.posts
           html = erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })
 
           JSON.dump({
-                      "messages" => messages,
+                      "posts" => posts,
                       "dat_size" => thread.bytesize,
                       "thread_size" => thread.size,
                       "html" => html
