@@ -501,7 +501,7 @@ module Genkai
 
     def error_response(message)
       @title = 'ＥＲＲＯＲ！'
-      @reason = "ＥＲＲＯＲ：#{message}"
+      @reason = "ＥＲＲＯＲ：#{h(message)}"
       erb(:post_error)
     end
 
