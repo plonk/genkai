@@ -45,11 +45,11 @@
 
      // ローカルストレージに名前とメールを保存する。
      if ($('#remember')[0].checked) {
-         localStorage.setItem('name', $('input[name=mail]')[0].value);
-         localStorage.setItem('FROM', $('input[name=FROM]')[0].value);
+         localStorage.setItem('<%= @board.id %>_name', $('input[name=mail]')[0].value);
+         localStorage.setItem('<%= @board.id %>_FROM', $('input[name=FROM]')[0].value);
      } else {
-         localStorage.removeItem('name');
-         localStorage.removeItem('FROM');
+         localStorage.removeItem('<%= @board.id %>_name');
+         localStorage.removeItem('<%= @board.id %>_FROM');
      }
 
      const fd = new FormData()
@@ -83,10 +83,10 @@
  $(function(){
      $('#post_dialog').on('show.bs.modal', function(){
          // ローカルストレージから名前とメールを復元する。
-         if (localStorage.name || localStorage.FROM) {
+         if (localStorage.getItem('<%= @board.id %>_name') || localStorage.getItem('<%= @board.id %>_FROM')) {
              $('#remember')[0].checked = true;
-             $('input[name=mail]')[0].value = localStorage.getItem('name');
-             $('input[name=FROM]')[0].value = localStorage.getItem('FROM');
+             $('input[name=mail]')[0].value = localStorage.getItem('<%= @board.id %>_name');
+             $('input[name=FROM]')[0].value = localStorage.getItem('<%= @board.id %>_FROM');
          } else {
              $('#remember')[0].checked = false;
          }
