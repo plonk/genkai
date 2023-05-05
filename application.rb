@@ -922,7 +922,16 @@ p channels
             if env["HTTP_IF_MODIFIED_SINCE"]
               # 秒未満を切り捨てる。
               filedate = Time.httpdate(f.stat.mtime.httpdate)
-              if filedate <= Time.httpdate(env["HTTP_IF_MODIFIED_SINCE"])
+              begin
+                clientdate = Time.httpdate(env["HTTP_IF_MODIFIED_SINCE"])
+              rescue ArgumentError
+                # Unacast で初回DAT取得時に "[Object object]" という内
+                # 容の If-Modifierd-Since ヘッダー値が渡される。そのよ
+                # うな場合、If-Modified-Since ヘッダが渡されたという事
+                # 実を無視して完全なDATを返す。
+                puts "Invalid If-Modified-Since header: #{env["HTTP_IF_MODIFIED_SINCE"].inspect}"
+              end
+              if clientdate && filedate <= clientdate
                 return [304,
                         {
                           "Last-Modified" => f.stat.mtime.httpdate,
