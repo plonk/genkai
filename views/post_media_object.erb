@@ -13,6 +13,9 @@
                 <% if post.id %>
                     <a style="font-family:monospace" onclick="$id_dialog_params = { id: <%= h post.id.inspect %> }; $('#id_dialog').modal()">ID:<%= h post.id %></a>
                 <% end %>
+                <% if post.subject == "muted" %>
+                    <span title="この投稿は読み上げられません。">&#x1F507;</span>
+                <% end %>
             </h4>
             <div class="nichan-message"><%= post.body %></div>
         </div>
