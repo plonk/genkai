@@ -37,7 +37,7 @@
     </style>
   </head>
   <body style="margin: 0">
-    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 1px"><span style="background-color: #c06060; color: #fff; padding-left: 1px; padding-right: 1px;">nitecast <%= @thread.subject %></span><br><div id="message"></div></div>
+    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 0px"><span style="display: inline-block; line-height: 16px; background-color: #c06060; color: #fff; padding-left: 4px; padding-right: 4px;">nitecast &#x1f9f5;<%= @thread.subject %><span id="netinfo"></span><span id="clock"></span></span><br><div id="message"></div></div>
 
   <audio id=kiri2 preload=auto src="/kiri2.wav"></audio>
   <button id=unmuteBtn style="margin-top: 16px; margin-left: 16px">ミュート解除</button>
@@ -93,7 +93,56 @@
         });
     };
 
+    function updateNetworkType() {
+        let text;
+        switch (navigator.connection.type) {
+            case 'cellular':
+                text = "モバイル"
+                break
+            case 'wifi':
+                text = "WiFi"
+                break
+            case 'none':
+                text = "接続なし"
+                break
+            default:
+                text = navigator.connection.type
+                break
+        }
+        $('#netinfo').html(` &#x1f4f6; ${text}`);
+    }
+
+    function updateClock() {
+        const d = new Date();
+        const yy = d.getYear() % 100;
+        const mon = ("" + (d.getMonth() + 1) ).padStart(2, '0');
+        const mday = ("" + d.getDate() ).padStart(2, '0');
+        const wday = "日月火水木金土"[d.getDay()];
+        const hh = ("" + d.getHours() ).padStart(2, '0')
+        const mm = ("" + d.getMinutes() ).padStart(2, '0')
+        const ss = ("" + d.getSeconds() ).padStart(2, '0')
+
+        const str = `${yy}年${mon}月${mday}日 (${wday}) ${hh}:${mm}:${ss}`;
+        $('#clock').html(` &#x1f552; ${str}`);
+    }
+
     async function main() {
+        if (navigator.connection && navigator.connection.type) {
+            updateNetworkType();
+            navigator.connection.addEventListener('change', () => {
+                updateNetworkType()
+            });
+        } else {
+            console.log("Network type indicator is disabled.");
+        }
+
+        if (params.get('clock') !== null) {
+            updateClock();
+            setInterval(() => {
+                updateClock();
+            }, 1000)
+        }
+
         while ($dat_size === null) {
             try {
                 $dat_size = await getInitialDatSize();
