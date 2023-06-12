@@ -95,10 +95,32 @@
     if (params.get('silent') !== null)
         $silentMode = true;
 
+    async function playVibratune() {
+        const tune = [
+            100, 80, 100, 80, 100, 80,
+            0, 180,
+            100, 80, 100, 80, 100, 80,
+            0, 180,
+            100, 80, 100, 80, 100, 80,
+            0, 180,
+            100, 80,
+            0, 180 + 100,
+        ]
+        const duration = tune.reduce((a,b) => a+b)
+        // パターンの再生に成功した場合は終わるまで呼び出し元がawaitで
+        // 待てるように継続時間のdelayを返す。
+        if (navigator.vibrate(tune)) {
+            return delay(duration)
+        } else {
+            return delay(0)
+        }
+    }
+
     async function showNextMessage() {
         var post = $queue.shift();
         if (post.subject !== "muted") {
             var forSpeech = massage(post.body);
+            await playVibratune();
             await speakDispatch(forSpeech);
             await delay(5000 / ($queue.length+1));
             // ↑この式はケアが要る。
