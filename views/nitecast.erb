@@ -37,7 +37,7 @@
     </style>
   </head>
   <body style="margin: 0">
-    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 0px"><span style="display: inline-block; line-height: 16px; background-color: #c06060; color: #fff; padding-left: 4px; padding-right: 4px;">nitecast &#x1f9f5;<%= @thread.subject %><span id="netinfo"></span><span id="clock"></span></span><br><div id="message"></div></div>
+    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 0px"><span style="display: inline-block; line-height: 16px; background-color: #c06060; color: #fff; padding-left: 4px; padding-right: 4px;"><span id="logo">nitecast</span> <span id="thread">&#x1f9f5; <%= h @thread.subject %></span><span id="netinfo"></span><span id="clock"></span><span id="weather"></span><span id="battery"></span></span><br><div id="message"></div></div>
 
   <audio id=kiri2 preload=auto src="/kiri2.wav"></audio>
   <button id=unmuteBtn style="margin-top: 16px; margin-left: 16px">ミュート解除</button>
@@ -126,51 +126,123 @@
         $('#clock').html(` &#x1f552; ${str}`);
     }
 
+    function updateBattery(battery) {
+        const ch_charging = '&#x26a1;' //'&#x1f50c;'
+        const ch_low_battery = '&#x1faab;'
+        const ch_battery = '&#x1f50b;'
+
+        $('#battery').html(` ${(battery.level <= 0.15) ? ch_low_battery : ch_battery}${(battery.charging) ? ch_charging : ''} ${Math.round(battery.level * 100)}%`)
+    }
+
+    async function updateWeather() {
+        const data = {weather: [{main:"Unknown"}], main: {temp: NaN}}
+        const table = {
+            Clouds: "くもり",
+            Rain: "あめ",
+            Snow: "ゆき",
+            Clear: "はれ",
+            Thunderstorm: "かみなり",
+        };
+
+        const etable = {
+            Clouds: "&#x2601;&#xfe0f;",
+            Rain: "&#x2602;&#xfe0f;",
+            Snow: "&#x2744;&#xfe0f;",
+            Clear: "&#x2600;&#xfe0f;",
+            Thunderstorm: "&#x26c8;&#xfe0f;",
+        };
+
+        const main = data['weather'][0]['main']
+        const word = table[main] || main
+        const emoji = etable[main] || '?'
+
+        const temp = `${Math.round(data.main.temp)}&#x2103;`
+        $('#weather').html(` ${emoji} ${word} ${temp}`)
+    }
+
     async function main() {
-        if (navigator.connection && navigator.connection.type) {
-            updateNetworkType();
-            navigator.connection.addEventListener('change', () => {
-                updateNetworkType()
-            });
-        } else {
-            console.log("Network type indicator is disabled.");
-        }
-
-        if (params.get('clock') !== null) {
-            updateClock();
-            setInterval(() => {
-                updateClock();
-            }, 1000)
-        }
-
-        while ($dat_size === null) {
-            try {
-                $dat_size = await getInitialDatSize();
-            } catch(textStatus) {
-                if (textStatus != "timeout")
-                    await delay(10*1000);
+        try {
+            if (params.get('nologo') !== null) {
+                $('#logo').hide()
             }
-        }
 
-        while (true) {
-            while (true) {
-                try {
-                    var data = await getNewMessages();
-                    console.log(data.posts);
+            if (params.get('nothread') !== null) {
+                $('#thread').hide()
+            }
 
-                    $queue = $queue.concat(data.posts);
-                    $dat_size = data.dat_size;
-                    break;
-                } catch(textStatus) {
-                    if (textStatus !== "timeout") {
-                        delay(5*1000);
+            if (params.get('netinfo') !== null) {
+                if (navigator.connection) {
+                    if (navigator.connection.type) {
+                        updateNetworkType();
+                        navigator.connection.addEventListener('change', () => {
+                            updateNetworkType()
+                        });
+                    } else {
+                        $('#netinfo').html(` &#x274c; Network Type N/A`)
                     }
+                } else {
+                    $('#netinfo').html(` &#x274c; Network Information API N/A`)
                 }
             }
 
-            while ($queue.length) {
-                await showNextMessage();
+            if (params.get('clock') !== null) {
+                updateClock();
+                setInterval(() => {
+                    updateClock();
+                }, 1000)
             }
+
+            if (params.get('weather') !== null) {
+                await updateWeather()
+                setInterval(() => {
+                    updateWeather()
+                }, 300 * 1000) // every 5min
+            }
+
+            if (params.get('battery') !== null) {
+                if (navigator.getBattery) {
+                    navigator.getBattery().then((battery) => {
+                        updateBattery(battery)
+                        battery.addEventListener('chargingchange', () => updateBattery(battery))
+                        battery.addEventListener('levelchange', () => updateBattery(battery))
+                    })
+                } else {
+                    $('#battery').html(` &#x274c; Battery API N/A`)
+                }
+            }
+
+            while ($dat_size === null) {
+                try {
+                    $dat_size = await getInitialDatSize();
+                } catch(textStatus) {
+                    if (textStatus != "timeout")
+                        await delay(10*1000);
+                }
+            }
+
+            while (true) {
+                while (true) {
+                    try {
+                        var data = await getNewMessages();
+                        console.log(data.posts);
+
+                        $queue = $queue.concat(data.posts);
+                        $dat_size = data.dat_size;
+                        break;
+                    } catch(textStatus) {
+                        if (textStatus !== "timeout") {
+                            delay(5*1000);
+                        }
+                    }
+                }
+
+                while ($queue.length) {
+                    await showNextMessage();
+                }
+            }
+
+        } catch (e) {
+            $('#message').text(e.message)
         }
     }
     main();
