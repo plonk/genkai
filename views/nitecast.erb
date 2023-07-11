@@ -37,26 +37,21 @@
     </style>
   </head>
   <body style="margin: 0">
-    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 0px"><span style="display: inline-block; line-height: 16px; background-color: #c06060; color: #fff; padding-left: 4px; padding-right: 4px;"><span id="logo">nitecast</span> <span id="thread">&#x1f9f5; <%= h @thread.subject %></span><span id="netinfo"></span><span id="clock"></span><span id="weather"></span><span id="battery"></span></span><br><div id="message"></div></div>
+    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 0px"><span style="display: inline-block; line-height: 16px; background-color: #c06060; color: #fff; padding-left: 4px; padding-right: 4px;"><span id="logo" title="ロゴ">nitecast</span> <span id="silent" style="display:none" title="消音">&#x1f507;<!-- muted speaker --></span>  <span id="thread" title="スレッド">&#x1f9f5; <%= h @thread.subject %></span><span id="netinfo" title="回線情報"></span><span id="clock" title="時計"></span><span id="weather" title="天気"></span><span id="battery" title="バッテリー"></span></span><br><div id="message"></div></div>
 
   <audio id=kiri2 preload=auto src="/kiri2.wav"></audio>
   <button id=unmuteBtn style="margin-top: 16px; margin-left: 16px">ミュート解除</button>
 
   <script src="/yomiage.js"></script>
   <script>
+    // extern yomiage.js:
+
     $yomiage_board_id = "<%= @board.id %>"
     $yomiage_thread_id = "<%= @thread.id %>"
 
-    // クエリ文字列に webapi キーが指定された場合は speech.pcgw.pgw.jp の API を使う。
-    // そうでなければ ブラウザ組み込みの 音声読み上げを使う。
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('webapi') !== null)
-        window.speakDispatch = speakHttpApi;
-    else
-        window.speakDispatch = speakSpeechSynthesis;
-
-    if (params.get('silent') !== null)
-        $silentMode = true;
+    // var $dat_size
+    // var $queue
+    // let $silentMode
 
     async function showNextMessage() {
         var post = $queue.shift();
@@ -80,18 +75,6 @@
     function showUnmuteButton() {
         window.unmuteBtn.hidden = false;
     }
-    // スクリプト主導の音声再生ができるかテストする。
-    window.unmuteBtn.hidden = true
-    if (!$silentMode) {
-        new Audio("/enabled.wav").play().catch(err => {
-            window.unmuteBtn.hidden = false;
-        });
-    }
-    window.unmuteBtn.onclick = ev => {
-        new Audio("/enabled.wav").play().then(_ => {
-            window.unmuteBtn.hidden = true
-        });
-    };
 
     function updateNetworkType() {
         let text;
@@ -160,17 +143,28 @@
         $('#weather').html(` ${emoji} ${word} ${temp}`)
     }
 
-    async function main() {
-        try {
-            if (params.get('nologo') !== null) {
+    function processOptions(params) {
+        const options = {
+            webapi() {
+                // クエリ文字列に webapi キーが指定された場合は speech.pcgw.pgw.jp の API を使う。
+                // そうでなければ ブラウザ組み込みの 音声読み上げを使う。
+                window.speakDispatch = speakHttpApi;
+            },
+
+            silent() {
+                $('#silent').show()
+                $silentMode = true;
+            },
+
+            nologo() {
                 $('#logo').hide()
-            }
+            },
 
-            if (params.get('nothread') !== null) {
+            nothread() {
                 $('#thread').hide()
-            }
+            },
 
-            if (params.get('netinfo') !== null) {
+            netinfo() {
                 if (navigator.connection) {
                     if (navigator.connection.type) {
                         updateNetworkType();
@@ -183,23 +177,24 @@
                 } else {
                     $('#netinfo').html(` &#x274c; Network Information API N/A`)
                 }
-            }
+            },
 
-            if (params.get('clock') !== null) {
+            clock() {
                 updateClock();
                 setInterval(() => {
                     updateClock();
                 }, 1000)
-            }
+            },
 
-            if (params.get('weather') !== null) {
-                await updateWeather()
-                setInterval(() => {
-                    updateWeather()
-                }, 300 * 1000) // every 5min
-            }
+            weather() {
+                updateWeather().then(() => {
+                    setInterval(() => {
+                        updateWeather()
+                    }, 300 * 1000) // every 5min
+                })
+            },
 
-            if (params.get('battery') !== null) {
+            battery() {
                 if (navigator.getBattery) {
                     navigator.getBattery().then((battery) => {
                         updateBattery(battery)
@@ -209,7 +204,34 @@
                 } else {
                     $('#battery').html(` &#x274c; Battery API N/A`)
                 }
+            },
+        }
+
+        for (const name of Object.keys(options)) {
+            if (params.get(name) !== null) {
+                options[name]()
             }
+        }
+    }
+
+    async function main() {
+        try {
+            window.speakDispatch = speakSpeechSynthesis;
+
+            processOptions(new URLSearchParams(window.location.search))
+
+            // スクリプト主導の音声再生ができるかテストする。
+            window.unmuteBtn.hidden = true
+            if (!$silentMode) {
+                new Audio("/enabled.wav").play().catch(err => {
+                    window.unmuteBtn.hidden = false;
+                });
+            }
+            window.unmuteBtn.onclick = ev => {
+                new Audio("/enabled.wav").play().then(_ => {
+                    window.unmuteBtn.hidden = true
+                });
+            };
 
             while ($dat_size === null) {
                 try {
