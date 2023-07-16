@@ -84,6 +84,9 @@
     $yomiage_board_id = "<%= @board.id %>"
     $yomiage_thread_id = "<%= @thread.id %>"
 
+    var $queue = [];
+    let $silentMode = false
+
     // クエリ文字列に webapi キーが指定された場合は speech.pcgw.pgw.jp の API を使う。
     // そうでなければ ブラウザ組み込みの 音声読み上げを使う。
     const params = new URLSearchParams(window.location.search)

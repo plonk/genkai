@@ -5,8 +5,6 @@ let $yomiage_thread_id = null
 
 // 外部に暴露するグローバル変数。
 var $dat_size = null;
-var $queue = [];
-let $silentMode = false
 
 async function getNewMessages() {
     console.log("getNewMessages");
@@ -58,7 +56,7 @@ function speakHttpApi(text) {
         var req = new XMLHttpRequest();
         var params = `text=${encodeURI(text)}&format=ogg`;
 
-        req.open("POST", "http://speech.pcgw.pgw.jp/v1/tts", true);
+        req.open("POST", "//speech.pcgw.pgw.jp/v1/tts", true);
         req.responseType = 'blob';
         req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 

@@ -37,12 +37,12 @@
     </style>
   </head>
   <body style="margin: 0">
-    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 0px"><span style="display: inline-block; line-height: 16px; background-color: #c06060; color: #fff; padding-left: 4px; padding-right: 4px;"><span id="logo" title="ロゴ">nitecast</span> <span id="silent" style="display:none" title="消音">&#x1f507;<!-- muted speaker --></span>  <span id="thread" title="スレッド">&#x1f9f5; <%= h @thread.subject %></span><span id="netinfo" title="回線情報"></span><span id="clock" title="時計"></span><span id="weather" title="天気"></span><span id="battery" title="バッテリー"></span></span><br><div id="message"></div></div>
+    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 0px"><span style="display: inline-block; line-height: 16px; background-color: #c06060; color: #fff; padding-left: 4px; padding-right: 4px;"><span id="logo" title="ロゴ">nitecast</span> <span id="silent" style="display:none" title="消音">&#x1f507;<!-- muted speaker --></span> <span id="channel"></span> <span id="thread" title="スレッド">&#x1f9f5; <%= h @thread.subject %></span><span id="netinfo" title="回線情報"></span><span id="clock" title="時計"></span><span id="weather" title="天気"></span><span id="battery" title="バッテリー"></span></span><br><div id="message"></div></div>
 
   <audio id=kiri2 preload=auto src="/kiri2.wav"></audio>
   <button id=unmuteBtn style="margin-top: 16px; margin-left: 16px">ミュート解除</button>
 
-  <script src="/yomiage.js"></script>
+  <script src="/yomiage.js?<%= Time.now.to_i %>"></script>
   <script>
     // extern yomiage.js:
 
@@ -50,8 +50,10 @@
     $yomiage_thread_id = "<%= @thread.id %>"
 
     // var $dat_size
-    // var $queue
-    // let $silentMode
+
+    // -------------------------------------------------
+    var $queue = [];
+    let $silentMode = false
 
     async function showNextMessage() {
         var post = $queue.shift();
@@ -143,12 +145,86 @@
         $('#weather').html(` ${emoji} ${word} ${temp}`)
     }
 
+    function formatUptime(totalSeconds) {
+        if (totalSeconds < 3600) {
+            const seconds = totalSeconds % 60
+            const minutes = Math.floor(totalSeconds / 60)
+            const s = ("" + seconds).padStart(2, '0')
+            const m = ("" + minutes).padStart(2, '0')
+            return `${m}:${s}`
+        } else {
+            const seconds = totalSeconds % 60
+            const minutes = Math.floor((totalSeconds % 3600) / 60)
+            const hours = Math.floor(totalSeconds / 3600)
+            const s = ("" + seconds).padStart(2, '0')
+            const m = ("" + minutes).padStart(2, '0')
+            const h = ("" + hours).padStart(2, '0')
+            return `${h}:${m}:${s}`
+        }
+    }
+
+    function h(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+    async function updateChannelStatusAsync(channel_name) {
+        while (true) {
+            const emoji = "&#x1f4fa;" // television
+            // "&#x25b6;&#xfe0f;" play button
+            let response
+            try {
+                response = await fetch(`https://pcgw.pgw.jp/api/1/channelStatus?name=${encodeURIComponent(channel_name)}`)
+            } catch (e) {
+                $('#channel').html(emoji + ` Fetch error`)
+                await delay(10 * 1000)
+                continue;
+            }
+            if (response.ok) {
+                const data = await response.json()
+                if (data.result) {
+                    if (data.result.length > 0) {
+                        const r = data.result[0]
+                        const genre = r.genre.replace(/^.p[?@]*/, '')
+                        const bitrate = ("" + r.bitrateActual).padStart(4, ' ')
+                        $('#channel').html(emoji +
+                                           ` ${h(r.name)}` +
+                                           ` &#x2139;&#xfe0f; ${h(r.description)}` + 
+                                           ` &#x1f441;&#xfe0f; <span style="white-space: pre-wrap; font-family: 'MS Gothic', monospace">${r.totalDirects}/${r.totalRelays}</span>` +
+                                           ` &#x1f497; <span style="white-space: pre-wrap; font-family: 'MS Gothic', monospace">${formatUptime(r.uptime)}</span>` +
+                                           ` &#x2b06;&#xfe0f; <span style="white-space: pre-wrap; font-family: 'MS Gothic', monospace">${bitrate}</span>kbps` )
+                    } else {
+                        $('#channel').html(emoji + h(` "${channel_name}" not found`))
+                        await delay(10 * 1000)
+                        continue;
+                    }
+                } else {
+                    $('#channel').html(emoji + " API Error")
+                    await delay(10 * 1000)
+                    continue;
+                }
+            } else {
+                $('#channel').html(emoji + ` ${status} Error`)
+                await delay(10 * 1000)
+                continue;
+            }
+            await delay(1000)
+        }
+    } 
+
     function processOptions(params) {
         const options = {
             webapi() {
                 // クエリ文字列に webapi キーが指定された場合は speech.pcgw.pgw.jp の API を使う。
                 // そうでなければ ブラウザ組み込みの 音声読み上げを使う。
                 window.speakDispatch = speakHttpApi;
+            },
+
+            channel() {
+                updateChannelStatusAsync(params.get('channel'))
             },
 
             silent() {
@@ -267,7 +343,10 @@
             $('#message').text(e.message)
         }
     }
-    main();
+
+    $(function(){
+        main();
+    })
   </script>
 
   </body>
