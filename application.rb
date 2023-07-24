@@ -2,7 +2,7 @@
 require 'sinatra'
 require_relative 'settings'
 require_relative 'board'
-require_relative 'thread'
+require_relative 'thread_file'
 require_relative 'post_builder'
 require_relative 'thread_list_renderer'
 require_relative 'authentication_information'

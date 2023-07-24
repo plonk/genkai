@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require_relative 'thread'
+require_relative 'thread_file'
 require 'fileutils'
 include Genkai
 

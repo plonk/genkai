@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require_relative 'extensions'
 require_relative 'board'
-require_relative 'thread'
+require_relative 'thread_file'
 require_relative 'post'
 require_relative 'string_helpers'
 

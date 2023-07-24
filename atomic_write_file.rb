@@ -17,7 +17,7 @@ class AtomicWriteFile
       raise TypeError, 'opts must be a Hash' unless opts.is_a? Hash
 
       perm = AtomicWriteFile.permission(path)
-      temp = Tempfile.new('atomic-write-file', dir, opts)
+      temp = Tempfile.new('atomic-write-file', dir, **opts)
       yield(temp)
       temp.close
       File.chmod(perm, temp.path)
