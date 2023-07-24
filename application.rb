@@ -545,6 +545,10 @@ module Genkai
       return label
     end
 
+    def emoji?(str)
+      !!(str =~ /\A[\p{Emoji}\p{Emoji_Component}]+\z/)
+    end
+
     # パラメーター
     # bbs: 板名
     # key: スレ番号
@@ -561,6 +565,15 @@ p params
       if params['MESSAGE'].size > 300
         fail '文字数が多すぎて投稿できません。'
       end
+
+      proc do
+        require 'cgi'
+        body = CGI.unescapeHTML(params['MESSAGE']).strip
+        unless emoji?(body)
+          bin = body.each_char.map { |c| "%04X" % c.ord }.join(' ')
+          fail "絵文字ではないので書き込めません。(RUBY_VERSION: #{RUBY_VERSION}, #{bin})"
+        end
+      end.()
       
       @@post_lock.synchronize do
 
