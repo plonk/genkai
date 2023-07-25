@@ -638,10 +638,10 @@ module Genkai
                     response['WWW-Authenticate'] = 'Basic realm="Admin area"'
                     if params[:charset]&.upcase == "UTF-8"
                       content_type "text/html; charset=UTF-8"
-                      halt 401, '視聴されていないホストからは書き込めません。'
+                      halt 401, error_response('視聴されていないホストからは書き込めません。')
                     else
                       content_type HTML_SJIS
-                      halt 401, '視聴されていないホストからは書き込めません。'.to_sjis
+                      halt 401, error_response('視聴されていないホストからは書き込めません。').to_sjis
                     end
                   end
                 end
