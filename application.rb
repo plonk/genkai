@@ -653,7 +653,7 @@ p channels
           from, mail, message = params.values_at('FROM', 'mail', 'MESSAGE')
           if nodes.any?
             vers = nodes.map { |n| n["versionString"] + extra_label(n) }.compact
-            if from&.empty?
+            if from.blank?
               from = vers.join(', ')
             else
               from = "#{from} (#{vers.join(', ')})"
