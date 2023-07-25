@@ -85,8 +85,10 @@ module Genkai
         new_params = params.to_a.map do |key, value|
           new_value = if value.is_a?(Array)
                         value.map(&:as_sjis).map(&:to_utf8)
-                      else
+                      elsif value.is_a?(String)
                         value.as_sjis.to_utf8
+                      else
+                        value # expecting value to be nil ...
                       end
           [key.as_sjis.to_utf8, new_value]
         end.to_h
@@ -459,7 +461,12 @@ module Genkai
         new_params = params.each_pair.map { |key, value|
           [
             esc_nonjis.(key),
-            value.is_a?(Array) ? value.map(&esc_nonjis) : esc_nonjis.(value)
+            case value
+            when Array then value.map(&esc_nonjis)
+            when String then esc_nonjis.(value)
+            when nil
+              value
+            end
           ]
         }.to_h
         params.replace(new_params)
