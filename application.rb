@@ -584,6 +584,7 @@ module Genkai
         fail 'メールアドレスにASCII図形文字以外は使えません。'
       end
 
+      params['MESSAGE'].gsub!(/&#[xX]([0-9a-fA-F]+);/) { "&##{$1.to_i(16)};" }
       proc do
         require 'cgi'
         body = CGI.unescapeHTML(params['MESSAGE']).strip
