@@ -565,9 +565,9 @@ module Genkai
     def post_message
       check_non_blank!('key', 'MESSAGE')
 
-puts '--post message--'
-p env
-p params
+#puts '--post message--'
+#p env
+#p params
 
       if params['MESSAGE'].size > 300
         fail '文字数が多すぎて投稿できません。'
@@ -602,7 +602,7 @@ p params
           for port in [8144] #[7148, 7150, 7152, 7154]
             peercast = Peercast.new('localhost', port)
             channels = peercast.getChannels
-p channels
+#p channels
             ch = channels.find { |i| i['status']['isBroadcasting'] }
             chid = nil
             network = nil
