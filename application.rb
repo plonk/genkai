@@ -750,8 +750,13 @@ module Genkai
       @head = "<meta http-equiv=\"refresh\" content=\"1; url=#{h back}\">"
       @title = '書きこみました'
 
-      content_type HTML_SJIS
-      erb(:posted).to_sjis!
+      if params[:charset]&.upcase == "UTF-8"
+        content_type "text/html; charset=UTF-8"
+        erb(:posted)
+      else
+        content_type HTML_SJIS
+        erb(:posted).to_sjis!
+      end
     end
 
     # パラメーター
