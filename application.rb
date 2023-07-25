@@ -573,6 +573,17 @@ module Genkai
         fail '文字数が多すぎて投稿できません。'
       end
 
+      unless params[:FROM].blank?
+        fail '名前は空欄にしてください。'
+      end
+
+      if params[:mail].nil?
+        params[:mail] = ""
+      end
+      unless params[:mail] =~ /\A[\x21-\x7e]*\z/
+        fail 'メールアドレスにASCII図形文字以外は使えません。'
+      end
+
       proc do
         require 'cgi'
         body = CGI.unescapeHTML(params['MESSAGE']).strip
