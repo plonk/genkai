@@ -153,6 +153,18 @@ module Genkai
       end
     end
 
+    def emoji_only?
+      settings['EMOJI_ONLY_MODE'] == 'true'
+    end
+
+    def emoji_only=(value)
+      if !!value
+        settings['EMOJI_ONLY_MODE'] = 'true'
+      else
+        settings['EMOJI_ONLY_MODE'] = 'false'
+      end
+    end
+
     def default_name
       name = settings['BBS_NONAME_NAME']
       if name.blank?

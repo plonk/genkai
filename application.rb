@@ -351,6 +351,8 @@ module Genkai
       @board.thread_stop_message = params['thread_stop_message']
       @board.id_policy = params['id_policy'].to_sym
 
+      @board.emoji_only = (params['emoji_only'] == 'true')
+
       @board.settings.save
 
       @title = "“#{@board.id}”の設定"
@@ -580,8 +582,10 @@ module Genkai
         fail '文字数が多すぎて投稿できません。'
       end
 
-      unless params[:FROM].blank?
-        fail '名前は空欄にしてください。'
+      if @board.emoji_only?
+        unless params[:FROM].blank?
+          fail '名前は空欄にしてください。'
+        end
       end
 
       if params[:mail].nil?
@@ -592,14 +596,16 @@ module Genkai
       end
 
       params['MESSAGE'].gsub!(/&#[xX]([0-9a-fA-F]+);/) { "&##{$1.to_i(16)};" }
-      proc do
-        require 'cgi'
-        body = CGI.unescapeHTML(params['MESSAGE']).strip
-        unless emoji?(body)
-          bin = body.each_char.map { |c| "%04X" % c.ord }.join(' ')
-          fail "絵文字ではないので書き込めません。(RUBY_VERSION: #{RUBY_VERSION}, #{bin})"
-        end
-      end.()
+      if @board.emoji_only?
+        proc do
+          require 'cgi'
+          body = CGI.unescapeHTML(params['MESSAGE']).strip
+          unless emoji?(body)
+            bin = body.each_char.map { |c| "%04X" % c.ord }.join(' ')
+            fail "絵文字ではないので書き込めません。(RUBY_VERSION: #{RUBY_VERSION}, #{bin})"
+          end
+        end.()
+      end
       
       @@post_lock.synchronize do
 

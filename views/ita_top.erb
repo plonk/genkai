@@ -43,8 +43,17 @@
     </div>
   </div>
 
-  <a class="btn btn-default btn-xs" style="float: right" href="/admin/boards/<%= h @board.id %>">
-    <span class="glyphicon glyphicon-ban-circle"></span>
-    管理
-  </a>
+  <div style="margin-bottom: 20px">
+    絵文字オンリーモード
+    <% if @board.settings.emoji_only? %>
+      <span class="badge" style="background-color: #22aa22">有効</span>
+    <% else %>
+      <span class="badge">無効</span>
+    <% end %>
+    &nbsp;
+    <a class="btn btn-default btn-xs" style="float: right" href="/admin/boards/<%= h @board.id %>">
+      <span class="glyphicon glyphicon-ban-circle"></span>
+      管理
+    </a>
+  </div>
 </div>
