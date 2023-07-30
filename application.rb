@@ -102,6 +102,13 @@ module Genkai
       def unescape_body(str)
         StringHelpers.unescape_field(str.gsub(/<\/?a[^>]*>/, '').gsub(' <br> ', "\n").gsub(/^ | $/, ''))
       end
+
+      def latest(path)
+        fail "relative path not supported" unless path.start_with?('/')
+        abpath = File.join(settings.public_folder, path)
+        mtime = File.mtime(abpath)
+        path + "?" + mtime.to_i.to_s
+      end
     end
 
     @@site_settings = SettingsFile.new('SETTING.TXT')
