@@ -32,10 +32,19 @@ footer {
     resize: none;
 }
 
+img.emoji {
+    height: 1em;
+    width: 1em;
+    margin: 0 0.05em 0 0.1em;
+    vertical-align: -0.1em;
+}
+
+.media:hover { background-color: #f0f0f0 }
+
 :root { color-scheme: light dark }
 @media (prefers-color-scheme: dark) {
     body {
-        background-color: #111;
+        background-color: #222;
         color: #fff;
         margin-top: 1px;
     }
@@ -56,7 +65,7 @@ footer {
     .btn-default, .btn-default:active, .btn-default:hover, .btn-default:focus {
         text-shadow: none;
         background-image: none;
-        background-color: #111;
+        background-color: #333;
         color: white;
         border-width: 2px;
     }
@@ -70,4 +79,21 @@ footer {
     .form-control { color: #fff; background-color: #444 }
 
     .close, .close:focus, .close:hover { color: #fff }
+
+    .list-group-item { background-color: #333 }
+    a.list-group-item { color: #ccc }
+    a:hover.list-group-item { color: #ccc; background-color: #444 }
+
+    .panel-default > .panel-heading {
+        color: #fff;
+        background-image: linear-gradient(to bottom,#0f0 0,#f0f 100%);
+        background-repeat: repeat-x;
+    }
+
+    .media:hover { background-color: #444 }
+
+    img.emoji { 
+        filter: drop-shadow(0.1em 0.075em 0px rgba(0, 0, 0, 0.75)) drop-shadow(0em 0.0em 0.2em rgb(0, 255, 255));
+        margin: 0 0.05em 0.3em 0.4em;
+    }
 }
