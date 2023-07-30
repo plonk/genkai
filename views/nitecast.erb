@@ -34,6 +34,14 @@
                        -1px 0px 0px #000080,
                        -1px -1px 0px #000080;
       }
+      img.emoji {
+          height: 1em;
+          width: 1em;
+          margin: 0 0.05em 0 0.1em;
+          vertical-align: -0.1em;
+
+          filter: drop-shadow(0.1em 0.075em 0px rgb(0,0,0.1,0.75));
+      }
     </style>
   </head>
   <body style="margin: 0">
@@ -42,6 +50,7 @@
   <audio id=kiri2 preload=auto src="/kiri2.wav"></audio>
   <button id=unmuteBtn style="margin-top: 16px; margin-left: 16px">ミュート解除</button>
 
+  <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
   <script src="/yomiage.js?<%= Time.now.to_i %>"></script>
   <script>
     // extern yomiage.js:
@@ -55,20 +64,42 @@
     var $queue = [];
     let $silentMode = false
 
+    function isEmoji(str) {
+        const div = document.createElement('div')
+        div.innerHTML = str
+        return div.innerText.match(/^[\p{Emoji}\p{Emoji_Component}]+$/u) !== null
+    }
+
+    async function showPostAsync(post) {
+        let inner_html = post.body
+        
+        if (isEmoji(post.body.trim())) {
+            // double the size.
+            inner_html = `<span style="font-size:32px; line-height:36px">${inner_html}</span>`
+        }
+        $('#message').html(inner_html)
+        twemoji.parse($('#message')[0])
+        $('#message').hide()
+        $('#message').show(400)
+
+        const forSpeech = massage(post.body)
+        console.log("forSpeech", forSpeech)
+        if ($silentMode) {
+            await delay(5000)
+        } else {
+            await speakDispatch(forSpeech)
+        }
+        await delay(5000 / ($queue.length+1))
+        // ↑この式はケアが要る。
+        $('#message').hide(400)
+        await delay(400)
+        $('#message').html('')
+    }
+
     async function showNextMessage() {
-        var post = $queue.shift();
+        var post = $queue.shift()
         if (post.subject !== 'muted') {
-            $('#message').html(post.body);
-            var forSpeech = massage(post.body);
-            console.log("forSpeech", forSpeech);
-            if ($silentMode) {
-                await delay(5000);
-            } else {
-                await speakDispatch(forSpeech);
-            }
-            await delay(5000 / ($queue.length+1));
-            // ↑この式はケアが要る。
-            $('#message').html('');
+            await showPostAsync(post)
         } else {
             console.info('muted message skipped')
         }

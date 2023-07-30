@@ -1,3 +1,4 @@
+<script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 <script>
  function scrollToBottom(ev) {
      //$(window).scrollTop($(document).height() - $(window).height())
@@ -11,7 +12,7 @@
  }
 </script>
 
-<div class="form-group" style="text-align: right; position: fixed; bottom: 0em; right: 2em; margin-bottom:5px">
+<div class="form-group" style="text-align: right; position: fixed; bottom: 0em; right: 2em; margin-bottom:5px; z-index: 1">
   <button id="unmuteBtn" class="btn btn-default" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);">&#x1F4E2;<!-- loudspeaker -->ミュート解除</button>
 
   <button class="btn btn-default" style="box-shadow: 3px 3px 5px 1px rgba(0, 0, 0, .4);" onclick="scrollToBottom()">
@@ -159,6 +160,7 @@
                 var data = await getNewMessages();
                 console.log("got data", data);
                 $('#timeline').html(data.html); // replace all
+                twemoji.parse($('#timeline')[0]);
                 $dat_size = data.dat_size;
                 $('#thread_size').text(data.thread_size);
                 break;
@@ -183,6 +185,7 @@
                     $dat_size = data.dat_size;
 
                     $('#timeline').html($('#timeline').html() + data.html);
+                    twemoji.parse($('#timeline')[0]);
                     $("html, body").animate({ scrollTop: $(document).height() }, "slow");
 
                     $('#thread_size').text(data.thread_size);
