@@ -929,9 +929,12 @@ module Genkai
 
     get '/:board/SETTING.TXT' do |board|
       if params[:format] == 'json'
+        content_type 'application/json'
+        #headers "Access-Control-Allow-Origin" => '*'
+
         lines = File.read(board_path(board) / "SETTING.TXT", encoding: 'CP932').encode('UTF-8').lines.map(&:chomp)
         object = lines.map { |ln| ln.split('=',2) }.to_h
-        return 200, { 'Content-Type' => 'application/json' }, JSON.dump(object)
+        return JSON.dump(object)
       else
         headers["Content-Type"] = PLAIN_SJIS
         send_file(board_path(board) / "SETTING.TXT")
