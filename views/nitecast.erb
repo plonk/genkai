@@ -42,16 +42,23 @@
 
           filter: drop-shadow(0.1em 0.075em 0px rgb(0,0,0.1,0.75));
       }
+      .badge {
+          background-color: #22aa22;
+          box-shadow: #000000cc 1px 1px;
+          padding: 0px 2px;
+          border-radius: 3px;
+          display: inline-block;
+      }
     </style>
   </head>
   <body style="margin: 0">
-    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 0px"><span style="display: inline-block; line-height: 16px; background-color: #c06060bb; color: #fff; padding-left: 4px; padding-right: 4px; text-shadow: #000000cc 1px 1px;"><span id="logo" title="ロゴ">nitecast</span> <span id="silent" style="display:none" title="消音">&#x1f507;<!-- muted speaker --></span> <span id="channel"></span> <span id="thread" title="スレッド">&#x1f9f5; <%= h @thread.subject %></span><span id="netinfo" title="回線情報"></span><span id="clock" title="時計"></span><span id="weather" title="天気"></span><span id="battery" title="バッテリー"></span></span><br><div id="message"></div></div>
+    <div style="line-height: 10px;  font-family: 'MS PGothic'; font-size: 12px; padding-top: 0px"><span style="display: inline-block; line-height: 16px; background-color: #c06060bb; color: #fff; padding-left: 4px; padding-right: 4px; text-shadow: #000000cc 1px 1px;"><span id="logo" title="ロゴ">nitecast</span> <span id="silent" style="display:none" title="消音">&#x1f507;<!-- muted speaker --></span> <span id="channel"></span> <span id="thread" title="スレッド">&#x1f9f5; <%= h @thread.subject %> <span id="emoji_only" class="badge">&#x1f910;</span><span id="thread_error"></span></span><span id="netinfo" title="回線情報"></span><span id="clock" title="時計"></span><span id="weather" title="天気"></span><span id="battery" title="バッテリー"></span></span><br><div id="message"></div></div>
 
   <audio id=kiri2 preload=auto src="/kiri2.wav"></audio>
   <button id=unmuteBtn style="margin-top: 16px; margin-left: 16px">ミュート解除</button>
 
   <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
-  <script src="/yomiage.js?<%= Time.now.to_i %>"></script>
+  <script src="<%= h latest '/yomiage.js' %>"></script>
   <script>
     // extern yomiage.js:
 
@@ -239,13 +246,43 @@
                     continue;
                 }
             } else {
-                $('#channel').html(emoji + ` ${status} Error`)
+                $('#channel').html(emoji + ` ${response.status} Error`)
                 await delay(10 * 1000)
                 continue;
             }
             await delay(1000)
         }
     } 
+
+    async function updateThreadInfoAsync() {
+        while (true) {
+            let response
+            try {
+                response = await fetch(`//genkai.pcgw.pgw.jp/${$yomiage_board_id}/SETTING.TXT?format=json`)
+            } catch (e) {
+                $('#thread_error').html(`Fetch error`)
+                await delay(10 * 1000)
+                continue;
+            }
+
+            if (response.ok) {
+                $('#thread_error').html('')
+                const data = await response.json()
+                if (data['EMOJI_ONLY_MODE'] === "true") {
+                    $('#emoji_only').show()
+                } else {
+                    $('#emoji_only').hide()
+                }
+                await delay(10 * 1000)
+                continue
+            } else {
+                $('#thread_error').html(`${response.status} Error`)
+                await delay(10 * 1000)
+                continue
+            }
+        }
+    }
+
 
     function processOptions(params) {
         const options = {
@@ -319,6 +356,10 @@
             if (params.get(name) !== null) {
                 options[name]()
             }
+        }
+
+        if (params.get("nothread") === null) {
+            updateThreadInfoAsync()
         }
     }
 
