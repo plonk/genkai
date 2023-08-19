@@ -35,7 +35,6 @@ function massage(text) { // もみもみ
     text = text.replace(/ <br> /g, ' ');
     text = text.replace(/h?ttps?:\/\/[A-Za-z0-9+\/~_\-.?=%]+/g, "[URL]");
     text = text.replace(/<a href="[^"]+">&gt;&gt;(\d+)<\/a>/g, (_, p1) => p1 + " ");
-    text = text.replace(/&#x?\d+;/g, ""); // 数値実体参照を全削除する。
 
     // 繰り返しを省略する。
     let oldlength = text.length;
