@@ -353,6 +353,7 @@ module Genkai
       @board.id_policy = params['id_policy'].to_sym
 
       @board.emoji_only = (params['emoji_only'] == 'true')
+      @board.reject_same_content = (params['reject_same_content'] == 'true')
 
       @board.settings.save
 
@@ -727,7 +728,7 @@ module Genkai
         #   fail 'ドメイン規制により書き込めません。'
         # end          
         
-        if thread.posts.last(25).any? { |x| x.body == post.body }
+        if @board.reject_same_content? && thread.posts.last(25).any? { |x| x.body == post.body }
           fail '最近のレスと重複する内容は書き込めません。'
         end
         

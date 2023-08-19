@@ -165,6 +165,18 @@ module Genkai
       end
     end
 
+    def reject_same_content?
+      settings['REJECT_SAME_CONTENT'] == 'true'
+    end
+
+    def reject_same_content=(value)
+      if !!value
+        settings['REJECT_SAME_CONTENT'] = 'true'
+      else
+        settings['REJECT_SAME_CONTENT'] = 'false'
+      end
+    end
+
     def default_name
       name = settings['BBS_NONAME_NAME']
       if name.blank?

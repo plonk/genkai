@@ -63,6 +63,14 @@
           絵文字オンリー
         </label>
       </div>
+
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" name="reject_same_content" value="true"
+          <%= 'checked' if @board.reject_same_content? %> >
+          同一内容の連投を禁止 <small>(同スレッド内直近25レス)</small>
+        </label>
+      </div>
     </div>
 
     <div class="form-group">
