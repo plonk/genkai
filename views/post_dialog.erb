@@ -64,13 +64,13 @@
      const res = await fetch('/test/bbs.cgi?charset=utf-8', { method: 'POST', body: fd })
      if (res.status == 200) {
          const html = await res.text();
-         console.log(html)
          if (/ＥＲＲＯＲ/.exec(html)) {
              const msg = $($.parseHTML(html)).text()
              const trimmed = msg.replace(/\r/g, '')
                                 .split(/\n/).map(ln => ln.trim()).filter(ln => ln!='').join("\n")
              alert(trimmed);
          } else {
+             console.log(html)
              $('form#post_form')[0].reset()
              $('#post_dialog').modal('hide')
          }
