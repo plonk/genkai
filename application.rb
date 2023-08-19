@@ -10,6 +10,7 @@ require 'time' # for Time.httpdate, Time#httpdate
 require_relative 'peercast'
 require 'resolv'
 require_relative 'string_helpers'
+require_relative 'unicode/emoji_annotator'
 
 module Genkai
   # Genkaiアプリケーション。
@@ -562,7 +563,9 @@ module Genkai
     end
 
     def emoji?(str)
-      !!(str =~ /\A[\p{Emoji}\p{Emoji_Component}]+\z/)
+      annotate = EmojiAnnotator.new
+      segments = annotate.(str)
+      return segments.all? { _1[0] == :annotated }
     end
 
     # パラメーター
@@ -601,8 +604,8 @@ module Genkai
           require 'cgi'
           body = CGI.unescapeHTML(params['MESSAGE']).strip
           unless emoji?(body)
-            bin = body.each_char.map { |c| "%04X" % c.ord }.join(' ')
-            fail "絵文字ではないので書き込めません。(RUBY_VERSION: #{RUBY_VERSION}, #{bin})"
+            bin = body.each_char.map { |c| "%X" % c.ord }.join(' ')
+            fail "絵文字ではないので書き込めません。(#{bin})"
           end
         end.()
       end

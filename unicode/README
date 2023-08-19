@@ -1,0 +1,5 @@
+anno.json は Unicode, Inc. によってリリースされた ja.xml と
+ja-derived.xml に、emoji-test.json は 同じく Unicode, Inc. によってリ
+リースされた emoji-test.txt にそれぞれ基いている。
+
+詳細は Makefile を参照。
