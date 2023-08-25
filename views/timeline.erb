@@ -28,11 +28,15 @@
   </button>
 </div>
 
-<ol class="breadcrumb">
+<ol class="breadcrumb" style="margin-bottom:0">
   <li><a href="/"><%= h @site_settings['SITE_NAME'] %></a></li>
   <li><a href="/<%= h @board.id %>/"><%= h @board.title %></a></li>
   <li class="active"><%= h @thread.subject %></li>
 </ol>
+
+<div style="padding:8px 15px">
+  <%= erb :board_mode_bar %>
+</div>
 
 <div class="container" style="padding-left:5px; padding-right:5px">
   <h3>
@@ -220,3 +224,4 @@
   <%= erb :post_dialog %>
   <%= erb :id_dialog %>
 </div>
+

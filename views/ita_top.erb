@@ -46,27 +46,7 @@
   </div>
 
   <div style="margin-bottom: 20px">
-    絵文字オンリーモード
-    <% if @board.emoji_only? %>
-      <span class="badge" style="background-color: #22aa22">有効</span>
-    <% else %>
-      <span class="badge">無効</span>
-    <% end %>
-    <span class="text-muted" style="margin-left:.75em;margin-right:.75em">|</span>
-    同一内容連投禁止
-    <% if @board.reject_same_content? %>
-      <span class="badge" style="background-color: #22aa22">有効</span>
-    <% else %>
-      <span class="badge">無効</span>
-    <% end %>
-    <span class="text-muted" style="margin-left:.75em;margin-right:.75em">|</span>
-    視聴者のみ投稿可能
-    <% if @board.forbid_nonviewer? %>
-      <span class="badge" style="background-color: #22aa22">有効</span>
-    <% else %>
-      <span class="badge">無効</span>
-    <% end %>
-    &nbsp;
+    <%= erb :board_mode_bar %>
     <a class="btn btn-default btn-xs" style="float: right" href="/admin/boards/<%= h @board.id %>">
       <span class="glyphicon glyphicon-ban-circle"></span>
       管理
