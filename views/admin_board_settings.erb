@@ -71,6 +71,14 @@
           同一内容の連投を禁止 <small>(同スレッド内直近25レス)</small>
         </label>
       </div>
+
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" name="forbid_nonviewer" value="true"
+          <%= 'checked' if @board.forbid_nonviewer? %> >
+          視聴者のみ投稿可能
+        </label>
+      </div>
     </div>
 
     <div class="form-group">

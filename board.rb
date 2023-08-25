@@ -177,6 +177,18 @@ module Genkai
       end
     end
 
+    def forbid_nonviewer?
+      settings['FORBID_NONVIEWER'] == 'true'
+    end
+
+    def forbid_nonviewer=(value)
+      if !!value
+        settings['FORBID_NONVIEWER'] = 'true'
+      else
+        settings['FORBID_NONVIEWER'] = 'false'
+      end
+    end
+
     def default_name
       name = settings['BBS_NONAME_NAME']
       if name.blank?

@@ -354,6 +354,7 @@ module Genkai
 
       @board.emoji_only = (params['emoji_only'] == 'true')
       @board.reject_same_content = (params['reject_same_content'] == 'true')
+      @board.forbid_nonviewer = (params['forbid_nonviewer'] == 'true')
 
       @board.settings.save
 
@@ -646,20 +647,22 @@ module Genkai
               if (nodes += find_node(trees, remote_addr)).any?
                 break
               else
-                board = params['bbs']
-                auth = Rack::Auth::Basic::Request.new(request.env)
-                unless authentic?(auth)
-                  # 板ごとの認証
-                  key = "PASSWORD_#{board}"
-                  unless @site_settings[key] != nil &&
-                         auth.provided? && auth.basic? && auth.credentials == [board, @site_settings[key]]
-                    response['WWW-Authenticate'] = 'Basic realm="Admin area"'
-                    if params[:charset]&.upcase == "UTF-8"
-                      content_type "text/html; charset=UTF-8"
-                      halt 401, error_response('視聴されていないホストからは書き込めません。')
-                    else
-                      content_type HTML_SJIS
-                      halt 401, error_response('視聴されていないホストからは書き込めません。').to_sjis
+                if @board.forbid_nonviewer?
+                  board = params['bbs']
+                  auth = Rack::Auth::Basic::Request.new(request.env)
+                  unless authentic?(auth)
+                    # 板ごとの認証
+                    key = "PASSWORD_#{board}"
+                    unless @site_settings[key] != nil &&
+                           auth.provided? && auth.basic? && auth.credentials == [board, @site_settings[key]]
+                      response['WWW-Authenticate'] = 'Basic realm="Admin area"'
+                      if params[:charset]&.upcase == "UTF-8"
+                        content_type "text/html; charset=UTF-8"
+                        halt 401, error_response('視聴されていないホストからは書き込めません。')
+                      else
+                        content_type HTML_SJIS
+                        halt 401, error_response('視聴されていないホストからは書き込めません。').to_sjis
+                      end
                     end
                   end
                 end
