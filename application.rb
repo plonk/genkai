@@ -1040,7 +1040,7 @@ module Genkai
 
                 posts = []
                 buf.each_line do |line|
-                  posts << Post.from_line(line).to_json
+                  posts << Post.from_line(line).to_h
                 end
                 buf = JSON.dump({
                                   "posts" => posts,
@@ -1080,7 +1080,7 @@ module Genkai
         elsif format == "json"
           posts = []
           thread = ThreadFile.new(dat_path(board, thread))
-          posts = thread.posts.map(&:to_json)
+          posts = thread_file.posts.map(&:to_h)
 
           @posts = thread.posts
           html = erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })

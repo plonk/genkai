@@ -37,8 +37,12 @@ module Genkai
       date.sub(%r{ ID:[A-Za-z0-9+/]+}, '')
     end
 
-    def to_json
+    def to_h
       { name: name, mail: mail, date: date, body: body, subject: subject, number: number }
+    end
+
+    def to_json(*args)
+      to_h.to_json(*args)
     end
   end
 end
