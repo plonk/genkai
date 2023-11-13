@@ -1097,6 +1097,23 @@ module Genkai
       end
     end
 
+    get '/api/getRes/:board/:thread/:number' do |board, thread, number|
+      halt 400, 'number' unless number =~ /\A[1-9][0-9]*\z/
+
+      target_number = number.to_i
+
+      posts = ThreadFile.new(dat_path(board, thread)).posts
+      # DATファイルが無い場合、posts は空配列になる。
+      post = posts.find { _1.number == target_number }
+
+      if post
+        content_type 'application/json'
+        return { post: post }.to_json
+      else
+        halt 404, 'No such post found'
+      end
+    end
+
     after do
       # メモリを節約。
       GC.start
