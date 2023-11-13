@@ -110,6 +110,12 @@ module Genkai
         mtime = File.mtime(abpath)
         path + "?" + mtime.to_i.to_s
       end
+
+      def linkify(text)
+        # [&;] を許可することで、&amp; の含まれた HTML unescape されていない文字列にもマッチする。
+        text = text.gsub(/h?ttps?:\/\/[A-Za-z0-9+\/~_\-.?=%&;]+/, "<a href=\"\\&\">\\&</a>")
+        return text
+      end
     end
 
     @@site_settings = SettingsFile.new('SETTING.TXT')

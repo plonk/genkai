@@ -18,7 +18,7 @@
                     <span title="この投稿は読み上げられません。">&#x1F507;</span>
                 <% end %>
             </h4>
-            <div class="nichan-message"><%= post.body %></div>
+            <div class="nichan-message"><%= linkify(post.body) %></div>
         </div>
     </div>
 </div>
