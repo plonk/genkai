@@ -1,9 +1,10 @@
+<% require 'json' %>
 <div class="media">
     <div class="media-left">
     </div>
     <div class="media-body">
         <div style="">
-            <h4 class="text-muted media-heading" style="font-size:small"><a href="/test/read.cgi/<%= board %>/<%= thread %>/<%= post.number %>"><%= post.number %></a>:
+            <h4 class="text-muted media-heading" style="font-size:small"><a href="/test/read.cgi/<%= board %>/<%= thread %>/<%= post.number %>" onclick="$res_dialog_params = { board: <%= h board.to_json %>, thread: <%= h thread.to_json %>, number: <%= post.number %> }; $('#res_dialog').modal(); event.preventDefault()"><%= post.number %></a>:
                 <% if post.mail.empty? then %>
                     <%= post.name %>
                 <% else %>
