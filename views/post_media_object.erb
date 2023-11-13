@@ -8,7 +8,7 @@
                 <% if post.mail.empty? then %>
                     <%= post.name %>
                 <% else %>
-                    <a class="do-nothing" href="#" title="<%= h post.mail %>"><%= post.name %></a>
+                    <a class="do-nothing" href="#" title="<%= h post.mail %>" onclick="event.preventDefault()"><%= post.name %></a>
                 <% end %>
                 <%= h post.date_proper %>
                 <% if post.id %>
