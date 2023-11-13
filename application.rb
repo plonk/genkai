@@ -1079,16 +1079,16 @@ module Genkai
           erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })
         elsif format == "json"
           posts = []
-          thread = ThreadFile.new(dat_path(board, thread))
+          thread_file = ThreadFile.new(dat_path(board, thread))
           posts = thread_file.posts.map(&:to_h)
 
-          @posts = thread.posts
+          @posts = thread_file.posts
           html = erb(:ajax_timeline, layout: false, locals: { board: board, thread: thread })
 
           JSON.dump({
                       "posts" => posts,
-                      "dat_size" => thread.bytesize,
-                      "thread_size" => thread.size,
+                      "dat_size" => thread_file.bytesize,
+                      "thread_size" => thread_file.size,
                       "html" => html
                     })
         else
