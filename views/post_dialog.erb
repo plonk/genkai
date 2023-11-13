@@ -75,6 +75,7 @@
              $('#post_dialog').modal('hide')
          }
      } else {
+         // 401「視聴されていないホストからは書き込めません。」のときこちらに来てHTMLが表示されてしまう。
          const text = await res.text()
          alert(text)
      }
