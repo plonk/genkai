@@ -158,45 +158,41 @@
     });
 
     async function main() {
-        while (true) {
-            try {
-                // with $dat_size = null
-                var data = await getNewMessages();
-                console.log("got data", data);
-                $('#timeline').html(data.html); // replace all
-                twemoji.parse($('#timeline')[0]);
-                $dat_size = data.dat_size;
-                $('#thread_size').text(data.thread_size);
-                break;
-            } catch (textStatus) {
-                if (textStatus == "timeout") {
-                    console.log("timeout");
-                } else {
-                    console.log(textStatus);
-                    await delay(10*1000);
-                }
-            }
-        }
-        console.log("initial load done");
+        if (!<%= speech_enabled_js %>)
+            return;
 
         while (true) {
             while (true) {
                 try {
-                    var data = await getNewMessages();
-                    console.log(data.posts);
+                    $('#timeline').css({ border: 'none' })
 
-                    $queue = $queue.concat(data.posts);
+                    const data = await getNewMessages();
+                    const initial_load = ($dat_size === null);
+
+                    if (initial_load) {
+                        $('#timeline').html(data.html); // replace all
+                    } else {
+                        console.log(data.posts);
+
+                        $('#timeline').append(data.html);
+                        $queue.push(... data.posts)
+                    }
                     $dat_size = data.dat_size;
 
-                    $('#timeline').html($('#timeline').html() + data.html);
                     twemoji.parse($('#timeline')[0]);
-                    $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+
+                    if (!initial_load) {
+                        $("html, body").animate({ scrollTop: $(document).height() }, "slow");
+                    }
 
                     $('#thread_size').text(data.thread_size);
 
                     break;
-                } catch(textStatus) {
+                } catch (textStatus) {
+                    // ロングポーリングなのでタイムアウトはエラーではない。
                     if (textStatus !== "timeout") {
+                        $('#timeline').css({ border: 'red solid 2px' })
+                        console.error(textStatus)
                         await delay(5*1000);
                     }
                 }
@@ -222,6 +218,7 @@
   </script>
 
   <%= erb :post_dialog %>
+  <%= erb :res_dialog %>
   <%= erb :id_dialog %>
 </div>
 
