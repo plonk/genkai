@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <title>Community</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <!-- <link rel="shortcut icon" type="image/png" href=""> -->
+    <script src="/bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="/render_helpers.js"></script>
+    <style>
+      #message {
+          line-height: 18px;
+          font-weight: bold;
+          color: #fff;
+          font-size: 16px;
+          padding-left: 2px; 
+          padding-right: 20px;
+          text-shadow: 0px -1px 0px  #0003,
+                       1px -1px 0px  #0003,
+                       1px 0px 0px   #0003,
+                       2px 0px 0px   #0003,
+                       3px 0px 0px   #0003,
+                       4px 0px 0px   #0003,
+                       1px 1px 0px   #0003,
+                       2px 1px 0px   #0003,
+                       3px 1px 0px   #0003,
+                       4px 1px 0px   #0003,
+                       1px 2px 0px   #0003,
+                       2px 2px 0px   #0003,
+                       3px 2px 0px   #0003,
+                       4px 2px 0px   #0003,
+                       1px 3px 0px   #0003,
+                       2px 3px 0px   #0003,
+                       3px 3px 0px   #0003,
+                       4px 3px 0px   #0003,
+                       1px 1px 0px   #0003,
+                       0px 1px 0px   #0003,
+                       -1px 1px 0px  #0003,
+                       -1px 0px 0px  #0003,
+                       -1px -1px 0px #0003;
+      }
+      img.emoji {
+          height: 1em;
+          width: 1em;
+          margin: 0 0.05em 0 0.1em;
+          vertical-align: -0.1em;
+
+          filter: drop-shadow(0.1em 0.075em 0px rgb(0,0,0.1,0.75));
+      }
+      .badge {
+          background-color: #22aa22;
+          box-shadow: #000000cc 1px 1px;
+          padding: 0px 2px;
+          border-radius: 3px;
+          display: inline-block;
+      }
+    </style>
+  </head>
+  <body style="margin: 0">
+    <div style="padding-top:0">
+      <div style="text-align:left">
+        <div style="float:right" id="message"></div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+
+  <script>
+    function delay(ms) {
+        return new Promise((resolve, _reject) => setTimeout(resolve, ms));
+    }
+
+    function isEmoji(str) {
+        const div = document.createElement('div')
+        div.innerHTML = str
+        return div.innerText.match(/^[\p{Emoji}\p{Emoji_Component}]+$/u) !== null
+    }
+
+    function h(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    async function updateCommunityAsync(channel_name) {
+        while (true) {
+            let response
+            try {
+                response = await fetch(`https://pcgw.pgw.jp/api/1/channelViewers?name=${encodeURIComponent(channel_name)}`)
+            } catch (e) {
+                $('#message').html(`Fetch error`)
+                await delay(10 * 1000)
+                continue;
+            }
+            if (response.ok) {
+                const data = await response.json()
+                if (data.result) {
+                    if (data.result.length > 0) {
+                        const r = data.result[0]
+                        console.log(r)
+                        $('#message').html("")
+                        $('#message').append("<h3>&#x1f4e3; Broadcaster</h3>")
+                        $('#message').append(who(... r.trackers.map(tracker => ['div', tracker])))
+                        $('#message').append("<h3>&#x1f465; Viewers</h3>")
+                        $('#message').append(who(... r.viewers.map(viewer => ['div', viewer])))
+                    } else {
+                        $('#message').html(h(`"${channel_name}" not found`))
+                        await delay(10 * 1000)
+                        continue;
+                    }
+                } else {
+                    $('#message').html("API Error")
+                    await delay(10 * 1000)
+                    continue;
+                }
+            } else {
+                $('#message').html(`${response.status} Error`)
+                await delay(10 * 1000)
+                continue;
+            }
+            await delay(10 * 1000)
+        }
+    }
+
+    function processOptions(params) {
+    }
+
+    async function main() {
+        try {
+            const params = new URLSearchParams(window.location.search)
+            processOptions(params)
+            updateCommunityAsync(params.get('channel'))
+        } catch (e) {
+            $('#message').text(e.message)
+        }
+    }
+
+    $(function(){
+        main();
+    })
+  </script>
+
+  </body>
+</html>

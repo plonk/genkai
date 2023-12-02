@@ -440,6 +440,13 @@ module Genkai
 
     # ------- nitecast.cgi --------
 
+    get '/test/community_overlay.cgi' do
+      content_type 'text/html; charset=UTF-8'
+      erb(:community_overlay, layout: false)
+    end
+
+    # ------- nitecast.cgi --------
+
     get '/test/nitecast.cgi/:board/:sure/' do |board, sure|
       @board = Board.new(board_path(board))
       @thread = @board.find_thread(sure)
