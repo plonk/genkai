@@ -72,15 +72,19 @@
     let $silentMode = false
 
     function isEmoji(str) {
+        return str.match(/^[\p{Emoji}\p{Emoji_Component}]+$/u) !== null
+    }
+
+    function unescapeHtml(html) {
         const div = document.createElement('div')
         div.innerHTML = str
-        return div.innerText.match(/^[\p{Emoji}\p{Emoji_Component}]+$/u) !== null
+        return div.innerText
     }
 
     async function showPostAsync(post) {
         let inner_html = post.body
         
-        if (isEmoji(post.body.trim())) {
+        if (isEmoji(unescapeHtml(inner_html.trim()))) {
             // double the size.
             inner_html = `<span style="font-size:32px; line-height:36px">${inner_html}</span>`
         }
