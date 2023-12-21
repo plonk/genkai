@@ -68,7 +68,7 @@
     // var $dat_size
 
     // -------------------------------------------------
-    var $queue = [];
+    var $queue = []
     let $silentMode = false
 
     function isEmoji(str) {
@@ -117,11 +117,11 @@
     }
 
     function showUnmuteButton() {
-        window.unmuteBtn.hidden = false;
+        window.unmuteBtn.hidden = false
     }
 
     function updateNetworkType() {
-        let text;
+        let text
         switch (navigator.connection.type) {
             case 'cellular':
                 text = "モバイル"
@@ -136,12 +136,12 @@
                 text = navigator.connection.type
                 break
         }
-        $('#netinfo').html(` &#x1f4f6; ${text}`);
+        $('#netinfo').html(` &#x1f4f6; ${text}`)
     }
 
     function updateClock() {
-        const d = new Date();
-        const yy = d.getYear() % 100;
+        const d = new Date()
+        const yy = d.getYear() % 100
         const mon = ("" + (d.getMonth() + 1) ) //.padStart(2, '0')
         const mday = ("" + d.getDate() ) //.padStart(2, '0')
         const wday = "日月火水木金土"[d.getDay()]
@@ -149,8 +149,8 @@
         const mm = ("" + d.getMinutes() ).padStart(2, '0')
         const ss = ("" + d.getSeconds() ).padStart(2, '0')
 
-        const str = `${yy}年${mon}月${mday}日 ${hh}:${mm}:${ss}`;
-        $('#clock').html(` &#x1f552; ${str}`);
+        const str = `${yy}年${mon}月${mday}日 ${hh}:${mm}:${ss}`
+        $('#clock').html(` &#x1f552; ${str}`)
     }
 
     function updateBattery(battery) {
@@ -169,7 +169,7 @@
             Snow: "ゆき",
             Clear: "はれ",
             Thunderstorm: "かみなり",
-        };
+        }
 
         const etable = {
             Clouds: "&#x2601;&#xfe0f;",
@@ -177,7 +177,7 @@
             Snow: "&#x2744;&#xfe0f;",
             Clear: "&#x2600;&#xfe0f;",
             Thunderstorm: "&#x26c8;&#xfe0f;",
-        };
+        }
 
         const main = data['weather'][0]['main']
         const word = table[main] || main
@@ -211,7 +211,7 @@
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+            .replace(/'/g, "&#039;")
     }
     async function updateChannelStatusAsync(channel_name) {
         while (true) {
@@ -223,7 +223,7 @@
             } catch (e) {
                 $('#channel').html(emoji + ` Fetch error`)
                 await delay(10 * 1000)
-                continue;
+                continue
             }
             if (response.ok) {
                 const data = await response.json()
@@ -242,17 +242,17 @@
                     } else {
                         $('#channel').html(emoji + h(` "${channel_name}" not found`))
                         await delay(10 * 1000)
-                        continue;
+                        continue
                     }
                 } else {
                     $('#channel').html(emoji + " API Error")
                     await delay(10 * 1000)
-                    continue;
+                    continue
                 }
             } else {
                 $('#channel').html(emoji + ` ${response.status} Error`)
                 await delay(10 * 1000)
-                continue;
+                continue
             }
             await delay(1000)
         }
@@ -266,7 +266,7 @@
             } catch (e) {
                 $('#thread_error').html(`Fetch error`)
                 await delay(10 * 1000)
-                continue;
+                continue
             }
 
             if (response.ok) {
@@ -293,7 +293,7 @@
             webapi() {
                 // クエリ文字列に webapi キーが指定された場合は speech.pcgw.pgw.jp の API を使う。
                 // そうでなければ ブラウザ組み込みの 音声読み上げを使う。
-                window.speakDispatch = speakHttpApi;
+                window.speakDispatch = speakHttpApi
             },
 
             channel() {
@@ -302,7 +302,7 @@
 
             silent() {
                 $('#silent').show()
-                $silentMode = true;
+                $silentMode = true
             },
 
             nologo() {
@@ -316,10 +316,10 @@
             netinfo() {
                 if (navigator.connection) {
                     if (navigator.connection.type) {
-                        updateNetworkType();
+                        updateNetworkType()
                         navigator.connection.addEventListener('change', () => {
                             updateNetworkType()
-                        });
+                        })
                     } else {
                         $('#netinfo').html(` &#x274c; Network Type N/A`)
                     }
@@ -329,9 +329,9 @@
             },
 
             clock() {
-                updateClock();
+                updateClock()
                 setInterval(() => {
-                    updateClock();
+                    updateClock()
                 }, 1000)
             },
 
@@ -369,7 +369,7 @@
 
     async function main() {
         try {
-            window.speakDispatch = speakSpeechSynthesis;
+            window.speakDispatch = speakSpeechSynthesis
 
             processOptions(new URLSearchParams(window.location.search))
 
@@ -377,42 +377,42 @@
             window.unmuteBtn.hidden = true
             if (!$silentMode) {
                 new Audio("/enabled.wav").play().catch(err => {
-                    window.unmuteBtn.hidden = false;
-                });
+                    window.unmuteBtn.hidden = false
+                })
             }
             window.unmuteBtn.onclick = ev => {
                 new Audio("/enabled.wav").play().then(_ => {
                     window.unmuteBtn.hidden = true
-                });
-            };
+                })
+            }
 
             while ($dat_size === null) {
                 try {
-                    $dat_size = await getInitialDatSize();
+                    $dat_size = await getInitialDatSize()
                 } catch(textStatus) {
                     if (textStatus != "timeout")
-                        await delay(10*1000);
+                        await delay(10*1000)
                 }
             }
 
             while (true) {
                 while (true) {
                     try {
-                        var data = await getNewMessages();
-                        console.log(data.posts);
+                        var data = await getNewMessages()
+                        console.log(data.posts)
 
-                        $queue = $queue.concat(data.posts);
-                        $dat_size = data.dat_size;
-                        break;
+                        $queue = $queue.concat(data.posts)
+                        $dat_size = data.dat_size
+                        break
                     } catch(textStatus) {
                         if (textStatus !== "timeout") {
-                            await delay(5*1000);
+                            await delay(5*1000)
                         }
                     }
                 }
 
                 while ($queue.length) {
-                    await showNextMessage();
+                    await showNextMessage()
                 }
             }
 
@@ -422,7 +422,7 @@
     }
 
     $(function(){
-        main();
+        main()
     })
   </script>
 
