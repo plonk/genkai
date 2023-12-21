@@ -60,7 +60,15 @@ module Genkai
 
       def check_non_blank!(*keys)
         keys.each do |key|
-          halt 400, "#{key} must not be blank" if params[key].blank?
+          if params[key].blank?
+            if params[:charset]&.upcase == "UTF-8"
+              content_type "text/html; charset=UTF-8"
+              halt 400, error_response("#{key} must not be blank")
+            else
+              content_type HTML_SJIS
+              halt 400, error_response("#{key} must not be blank").to_sjis
+            end
+          end
         end
       end
 
