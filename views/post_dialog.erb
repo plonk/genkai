@@ -62,22 +62,20 @@
      fd.set('submit', $('input[name=submit]')[0].value)
 
      const res = await fetch('/test/bbs.cgi?charset=utf-8', { method: 'POST', body: fd })
+     const trim = (str) => str.replace(/\r/g, '').split(/\n/).map(ln => ln.trim()).filter(ln => ln!='').join("\n")
+     const extractText = (html) => $($.parseHTML(html)).text()
      if (res.status == 200) {
          const html = await res.text();
          if (/ＥＲＲＯＲ/.exec(html)) {
-             const msg = $($.parseHTML(html)).text()
-             const trimmed = msg.replace(/\r/g, '')
-                                .split(/\n/).map(ln => ln.trim()).filter(ln => ln!='').join("\n")
-             alert(trimmed);
+             alert(trim(extractText(html)))
          } else {
              console.log(html)
              $('form#post_form')[0].reset()
              $('#post_dialog').modal('hide')
          }
      } else {
-         // 401「視聴されていないホストからは書き込めません。」のときこちらに来てHTMLが表示されてしまう。
-         const text = await res.text()
-         alert(text)
+         const html = await res.text()
+         alert(trim(extractText(html)))
      }
  }
 
