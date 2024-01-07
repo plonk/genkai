@@ -153,12 +153,25 @@
         $('#clock').html(` &#x1f552; ${str}`)
     }
 
+    let g_updateBattery_history = null
     function updateBattery(battery) {
         const ch_charging = '&#x26a1;' //'&#x1f50c;'
         const ch_low_battery = '&#x1faab;'
         const ch_battery = '&#x1f50b;'
 
-        $('#battery').html(` ${(battery.level <= 0.15) ? ch_low_battery : ch_battery}${(battery.charging) ? ch_charging : ''} ${Math.round(battery.level * 100)}%`)
+        let ch_chart = ''
+        if (g_updateBattery_history) {
+            if (g_updateBattery_history.level > battery.level) {
+                //ch_chart = '&#x1f4c9;' // chart decreasing
+                ch_chart = '&#x2198;&#xfe0f;' // down-right arrow
+            } else if (g_updateBattery_history.level < battery.level) {
+                //ch_chart = '&#x1f4c8;' // chart increasing
+                ch_chart = '&#x2197;&#xfe0f;' // up-right arrow
+            }
+        }
+        g_updateBattery_history = { level: battery.level }
+
+        $('#battery').html(` ${(battery.level <= 0.15) ? ch_low_battery : ch_battery}${(battery.charging) ? ch_charging : ''}${ch_chart} ${Math.round(battery.level * 100)}%`)
     }
 
     async function updateWeather() {
