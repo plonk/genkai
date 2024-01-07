@@ -369,6 +369,7 @@
 
     async function main() {
         try {
+            // webapi オプションで上書きされる。
             window.speakDispatch = speakSpeechSynthesis
 
             processOptions(new URLSearchParams(window.location.search))
