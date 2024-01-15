@@ -49,6 +49,11 @@
           border-radius: 3px;
           display: inline-block;
       }
+      body {
+          border: solid 2px #c06060bb;
+          box-sizing: border-box;
+          height: 100vh;
+      }
     </style>
   </head>
   <body style="margin: 0">
@@ -170,6 +175,13 @@
             }
         }
         g_updateBattery_history = { level: battery.level }
+
+        if (battery.level <= 0.15) {
+            $('body').css({borderColor: '#ff0'})
+        } else {
+            $('body').css({borderColor: '#c06060bb'})
+        }
+            
 
         $('#battery').html(` ${(battery.level <= 0.15) ? ch_low_battery : ch_battery}${(battery.charging) ? ch_charging : ''}${ch_chart} ${Math.round(battery.level * 100)}%`)
     }
