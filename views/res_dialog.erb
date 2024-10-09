@@ -26,6 +26,29 @@
 
           $('#res_dialog').modal('hide')
       })
+
+      // Delete res
+      $("#res_dialog #delete_res").on('click', async function(){
+          const { board, thread, number } = $res_dialog_params
+
+          if (!confirm(`${number} を削除しますか？`))
+              return
+
+          const fd = new FormData()
+          fd.set('post_numbers[]', number)
+
+          const res = await fetch(`/admin/boards/${board}/${thread}/delete-posts`, { method: 'POST', body: fd })
+          // 成功するとリダイレクトバックされて 200 が返る。
+          if (res.status != 200) {
+              alert(`${res.status} エラー`);
+              $('#res_dialog').modal('hide')
+          } else {
+              // 今の所レスの自動読み込み機能が範囲リクエストに失敗し
+              // てエラーになるのでTLページ自体を再読込する。
+              location.reload()
+          }
+      })
+
   })
 </script>
 
@@ -43,6 +66,7 @@
         <div class="list-group" style="margin-bottom:0">
           <a class="list-group-item" id="read_aloud">読み上げる</a>
           <a class="list-group-item" id="go_to">レスへのリンク</a>
+          <a class="list-group-item" id="delete_res">削除</a>
         </div>
       </div>
     </div>
