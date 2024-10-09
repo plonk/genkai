@@ -311,7 +311,7 @@ module Genkai
       end
 
       params['post_numbers'].map(&:to_i).each do |res_no|
-        halt(400, 'range error') unless res_no.between?(1, nposts)
+        halt(400, 'range error') unless res_no.between?(2, nposts)
 
         @thread.posts[res_no - 1] = @board.grave_stone
       end
