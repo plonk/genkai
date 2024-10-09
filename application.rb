@@ -18,6 +18,8 @@ module Genkai
     HTML_SJIS = 'text/html;charset=Shift_JIS'
     PLAIN_SJIS = 'text/plain;charset=Shift_JIS'
 
+    SYSTEM_BOT_NAME = '&#129302;システム'
+
     # 静的ファイルを提供するときにcharsetを指定しない。SJISのテキスト
     # ファイルがUTF8指定になることを防ぐ。
     set :add_charset, []
@@ -123,6 +125,23 @@ module Genkai
         # [&;] を許可することで、&amp; の含まれた HTML unescape されていない文字列にもマッチする。
         text = text.gsub(/h?ttps?:\/\/[A-Za-z0-9+\/~_\-.?=%&;]+/, "<a href=\"\\&\">\\&</a>")
         return text
+      end
+
+      def broadcast_message(board, message)
+        thread = board.get_all_threads.sort_by(&:mtime).reverse.first { |t| t.size < 1000 }
+        unless thread
+          info = {board: board, message: message}.inspect
+          STDERR.puts "Error: broadcast_message: No writable thread: #{info}"
+        end
+
+        body = message
+        builder = PostBuilder.new(board, thread, 'localhost')
+        post = builder.create_post(SYSTEM_BOT_NAME,
+                                   'sage', 
+                                   body)
+        thread.posts << post
+
+        thread.save
       end
     end
 
@@ -250,6 +269,9 @@ module Genkai
       ids = ids | [params['id']] # union
       @board.settings["BANNED_IDS"] = ids.join(' ')
       @board.settings.save
+
+      broadcast_message(@board, "ID:#{params['id']}がBANされました。")
+
       redirect back
     end
 
@@ -268,6 +290,9 @@ module Genkai
       ids = ids | [params['id']] # union
       @board.settings["MUTED_IDS"] = ids.join(' ')
       @board.settings.save
+
+      broadcast_message(@board, "ID:#{params['id']}がミュートされました。")
+
       redirect back
     end
 
@@ -767,7 +792,7 @@ module Genkai
           subject = Genkai.increment_subject(thread.subject)
           if @board.get_all_threads.none? { |t| t.subject == subject }
             builder = PostBuilder.new(@board, next_thread, 'localhost')
-            post = builder.create_post('システム',
+            post = builder.create_post(SYSTEM_BOT_NAME,
                                        'age', # 次スレはageる。
                                        unescape_body(thread.posts[0].body),
                                        subject)
@@ -778,9 +803,10 @@ module Genkai
           # 1001 追加。
           body = @board.thread_stop_message + "\n次スレ: #{subject}"
           builder = PostBuilder.new(@board, thread, 'localhost')
-          post = builder.create_post('システム',
+          post = builder.create_post(SYSTEM_BOT_NAME,
                                      'sage', 
                                      body)
+          # 日付を上書き。
           post.date = '1000 Over Thread'
           thread.posts << post
         end
@@ -936,6 +962,7 @@ module Genkai
       if regen
         renderer = ThreadListRenderer.new(threads)
         data = renderer.render.to_sjis
+        # これアトミックに書いてないけどいいの？
         File.open(subject_path, "w") do |f|
           f.write(data)
         end
