@@ -6,11 +6,11 @@
 <div class="container">
   <%= erb :admin_board_tabs, locals: { index: 1 } %>
 
-  <form class="form-inline" action="/admin/boards/<%= @board.id %>/delete-threads" method="POST">
+  <form action="/admin/boards/<%= @board.id %>/delete-threads" method="POST">
     <ul class="list-group">
       <% @threads.sort_by {|t| t.subject.scan(/\d+|[^\d]+/).map { |s| if s =~ /\d/ then [s.to_i, s] else [Float::INFINITY, s] end }}.each.with_index do |thread, i| %>
         <li class="list-group-item">
-          <input type="checkbox" class="form-control" name="threads[]" value="<%= thread.id %>">
+          <input type="checkbox" name="threads[]" value="<%= thread.id %>">
           <a href="/admin/boards/<%= @board.id %>/<%= thread.id %>">
             <%= thread.subject %> <span class="badge" style="float: right; vertical-align: middle"><%= thread.size %></span>
           </a>
